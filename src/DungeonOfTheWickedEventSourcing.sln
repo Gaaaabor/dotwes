@@ -5,9 +5,15 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DungeonOfTheWickedEventSourcing.Api", "DungeonOfTheWickedEventSourcing.Api\DungeonOfTheWickedEventSourcing.Api.csproj", "{3F452138-8ADD-4CDF-88B6-43332E872839}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DungeonOfTheWickedEventSourcing.Common", "DungeonOfTheWickedEventSourcing.Common\DungeonOfTheWickedEventSourcing.Common.csproj", "{3315884B-6480-4C5A-A694-4C795A1A86C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DungeonOfTheWickedEventSourcing.Common", "DungeonOfTheWickedEventSourcing.Common\DungeonOfTheWickedEventSourcing.Common.csproj", "{3315884B-6480-4C5A-A694-4C795A1A86C7}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{02D38BE1-ADAA-4ACB-95E8-FE294724ED2D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C67D3183-E14B-465C-ADC6-140CFF668EBC}"
+	ProjectSection(SolutionItems) = preProject
+		..\LICENSE.txt = ..\LICENSE.txt
+		..\README.md = ..\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

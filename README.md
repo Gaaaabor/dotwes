@@ -1,1 +1,1 @@
-# DungeonOfTheWickedEventSourcing
+# Dungeon Of The Wicked Event Sourcing
