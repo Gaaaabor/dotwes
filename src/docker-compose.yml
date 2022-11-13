@@ -1,0 +1,25 @@
+version: '3.9'
+
+networks:
+  dotwes-redis-bridge:
+    driver: bridge
+
+volumes:
+  cache:
+    driver: local
+
+services:
+
+  dotwes-redis:
+    image: redis:6.2-alpine
+    volumes:
+      - cache:/data
+    networks:
+      - dotwes-redis-bridge
+
+  dotwes-api:
+    build:
+      context: .
+      dockerfile: DungeonOfTheWickedEventSourcing.Api/Dockerfile
+    networks:
+      - dotwes-redis-bridge

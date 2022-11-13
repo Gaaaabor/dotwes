@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+
+  dotwes-redis:
+    image: redis:6.2-alpine
+    command: redis-server --save 20 1 --loglevel debug --requirepass LocalPass
+    volumes:
+      - cache:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - dotwes-redis-bridge
+
+  dotwes-api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ConnectionString="dotwes-redis,password=LocalPass"
+      - Port=5014
+      - SeedNodeHostNames=dotwes-api:5014
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
