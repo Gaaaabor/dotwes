@@ -1,4 +1,3 @@
-using DungeonOfTheWickedEventSourcing.Api.Application;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Controllers
@@ -8,19 +7,29 @@ namespace DungeonOfTheWickedEventSourcing.Api.Controllers
     public class DungeonController : ControllerBase
     {
         private readonly ILogger<DungeonController> _logger;
-        private readonly IActorSystem _actorSystem;
 
-        public DungeonController(ILogger<DungeonController> logger, IActorSystem actorSystem)
+        public DungeonController(ILogger<DungeonController> logger)
         {
             _logger = logger;
-            _actorSystem = actorSystem;
         }
 
-        [HttpGet]
-        public async Task<ActionResult> Get()
-        {
-            var result = await _actorSystem.GenerateDungeonAsync();
-            return Ok(result);
-        }
+        // TODO: Route to Akka OR use its "own" TCP messaging...
+        //[Route("/ws")]
+        //public async Task Get()
+        //{
+        //    if (HttpContext.WebSockets.IsWebSocketRequest)
+        //    {
+        //        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+        //        var buffer = new byte[1024 * 4];
+        //        var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+        //        var rawMessage = new ArraySegment<byte>(buffer, 0, receiveResult.Count);
+        //        var message = Encoding.UTF8.GetString(rawMessage);
+        //    }
+        //    else
+        //    {
+        //        HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+        //    }
+        //}
     }
 }
