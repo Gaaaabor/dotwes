@@ -1,6 +1,6 @@
 ﻿namespace DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands
 {
-    public class GenerateCommand
+    public interface IDungeonGuardianCommand : IDungeonWideCommand
     {
     }
 }

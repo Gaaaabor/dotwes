@@ -1,5 +1,4 @@
 using DungeonOfTheWickedEventSourcing.Api;
-using DungeonOfTheWickedEventSourcing.Api.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,8 +6,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<IActorSystem, AkkaHost>();
-builder.Services.AddHostedService(x => (AkkaHost)x.GetRequiredService<IActorSystem>());
+builder.Services.AddHostedService<AkkaHost>();
 
 var app = builder.Build();
 
@@ -21,5 +19,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseWebSockets();
 
 app.Run();
