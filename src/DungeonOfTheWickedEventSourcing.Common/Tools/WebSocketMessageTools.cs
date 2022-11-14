@@ -1,8 +1,6 @@
-﻿using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DungeonOfTheWickedEventSourcing.Common.Tools
 {
@@ -28,23 +26,21 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             return string.Empty;
         }
 
-        public static byte[] Decode(byte[] messageBytes)
+        /// <summary>
+        /// Calculates the message's total length from the first 8 bytes.
+        /// </summary>
+        /// <param name="messageBytes">The first frame which contains the total length.</param>
+        /// <returns>Total length of the message.</returns>
+        public static ulong GetMessageTotalLength(byte[] messageBytes)
         {
-            var packet = new List<byte>();
-
             using var messageStream = new MemoryStream(messageBytes);
-
             messageStream.Position = 0;
 
-            packet.Add((byte)messageStream.ReadByte());
-            var fin = (packet[0] & 1 << 7) != 0;
-            var rsv1 = (packet[0] & 1 << 6) != 0;
-            var rsv2 = (packet[0] & 1 << 5) != 0;
-            var rsv3 = (packet[0] & 1 << 4) != 0;
+            var packets = new byte[2];
+            messageStream.Read(packets, 0, 2);
 
-            packet.Add((byte)messageStream.ReadByte());
-            var masked = (packet[1] & 1 << 7) != 0;
-            var pseudoLength = packet[1] - (masked ? 128 : 0);
+            var masked = (packets[1] & 1 << 7) != 0;
+            var pseudoLength = packets[1] - (masked ? 128 : 0);
 
             ulong actualLength = 0;
             if (pseudoLength > 0 && pseudoLength < 125)
@@ -54,51 +50,19 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             else if (pseudoLength == 126)
             {
                 var length = new byte[2];
-                messageStream.Read(length, 0, length.Length);
-                packet.AddRange(length);
+                messageStream.Read(length, 0, length.Length);                
                 Array.Reverse(length);
                 actualLength = BitConverter.ToUInt16(length, 0);
             }
             else if (pseudoLength == 127)
             {
                 var length = new byte[8];
-                messageStream.Read(length, 0, length.Length);
-                packet.AddRange(length);
+                messageStream.Read(length, 0, length.Length);                
                 Array.Reverse(length);
                 actualLength = BitConverter.ToUInt64(length, 0);
             }
 
-            var mask = new byte[4];
-            if (masked)
-            {
-                messageStream.Read(mask, 0, mask.Length);
-                packet.AddRange(mask);
-            }
-
-            using var messageBuffer = new MemoryStream();
-
-            if (actualLength > 0)
-            {
-                var data = new byte[actualLength];
-                messageStream.Read(data, 0, data.Length);
-                packet.AddRange(data);
-
-                if (masked)
-                {
-                    data = ApplyMask(data, mask);
-                }
-
-                messageBuffer.Write(data, 0, data.Length);
-            }
-
-            if (!fin)
-            {
-                // TODO: Long message processing
-            }
-
-            var decodedMessage = messageBuffer.ToArray();
-            messageBuffer.SetLength(0);
-            return decodedMessage;
+            return actualLength;
         }
 
         public static byte[] Encode(byte[] messageBytes, bool masking = false, bool isBinary = false)
