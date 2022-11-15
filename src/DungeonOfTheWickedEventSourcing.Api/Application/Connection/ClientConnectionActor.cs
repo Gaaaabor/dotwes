@@ -9,16 +9,10 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 {
     public class ClientConnectionActor : InjectionReceiveActorBase<ClientConnectionActor>
     {
-        /// <summary>
-        /// The magic number 8 is the first 8 bytes of the first frame, which contains the total length of the framed message.
-        /// </summary>
-        private const int LengthHeaderLength = 8;
-
         private readonly System.Net.EndPoint _endPoint;
         private IActorRef _client;
-        private List<byte> _frames;
-        private ulong _messageLength;
-        private ulong _bytes;
+
+        private FramedWebSocketMessage _framedWebSocketMessage;
 
         public ClientConnectionActor(IServiceProvider serviceProvider, System.Net.EndPoint endPoint) : base(serviceProvider)
         {
@@ -58,7 +52,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 {
                     case WebSocketMessageType.Text:
                         var message = Encoding.UTF8.GetString(buffer[..result.Count]);
-                        Self.Tell(message);
+                        Self.Forward(message);
                         return;
 
                     case WebSocketMessageType.Binary:
@@ -93,18 +87,17 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 return;
             }
 
-            _messageLength = WebSocketMessageTools.GetMessageTotalLength(received.Data.ToArray());
-            if (_messageLength > (ulong)received.Data.Count)
+            var totalLength = WebSocketMessageTools.GetMessageTotalLength(received.Data.ToArray());
+            if (totalLength > (ulong)received.Data.Count)
             {
-                _frames = new List<byte>();
-                _frames.AddRange(received.Data.ToArray());
-                _bytes += (ulong)received.Data.Count;
+                _framedWebSocketMessage = new FramedWebSocketMessage(totalLength);
+                _framedWebSocketMessage.Write(received.Data.ToArray());
                 BecomeStacked(OnFrameReceived);
                 return;
             }
             else
             {
-                Self.Tell(received.Data.ToArray());
+                Self.Forward(received.Data.ToArray());
             }
         }
 
@@ -112,29 +105,27 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
         {
             if (rawFrame is Tcp.Received frame)
             {
-                if (_frames is null)
+                if (_framedWebSocketMessage is null)
                 {
                     UnbecomeStacked();
-                    Self.Tell(frame);
+                    Self.Forward(frame);
                     return;
                 }
 
-                _frames.AddRange(frame.Data.ToArray());
-                _bytes += (ulong)frame.Data.Count;
+                _framedWebSocketMessage.Write(frame.Data.ToArray());
             }
             else
             {
-                Self.Tell(rawFrame);
+                Self.Forward(rawFrame);
                 return;
             }
 
-            if (_bytes == (_messageLength + LengthHeaderLength))
+            if (_framedWebSocketMessage.IsCompleted())
             {
                 UnbecomeStacked();
-                Self.Tell(_frames.ToArray());
-                _frames = null;
-                _bytes = 0;
-                _messageLength = 0;
+                Self.Forward(_framedWebSocketMessage.ReadAllBytes());
+                _framedWebSocketMessage.Close();
+                _framedWebSocketMessage = null;
             }
         }
 
