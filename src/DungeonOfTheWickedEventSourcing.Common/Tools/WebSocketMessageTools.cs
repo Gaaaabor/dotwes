@@ -27,7 +27,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
         }
 
         /// <summary>
-        /// Calculates the message's total length from the first 8 bytes.
+        /// Calculates the message's total length.
         /// </summary>
         /// <param name="messageBytes">The first frame which contains the total length.</param>
         /// <returns>Total length of the message.</returns>
