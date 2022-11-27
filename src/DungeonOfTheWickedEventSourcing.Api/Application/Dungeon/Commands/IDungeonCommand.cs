@@ -2,5 +2,6 @@
 {
     public interface IDungeonCommand : IDungeonWideCommand
     {
+        public Guid DungeonId { get; set; }
     }
 }

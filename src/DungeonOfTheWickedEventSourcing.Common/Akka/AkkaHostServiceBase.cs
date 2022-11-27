@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
+using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker;
 using DungeonOfTheWickedEventSourcing.Common.Akka.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         {
             ActorSystem = CreateActorSystem();
             _dependencyResolver = DependencyResolver.For(ActorSystem);
+            CreateChildActor<ActorWalkerActor>(ActorWalkerActor.ActorName);
 
             Mediator = ActorSystem.GetMediator();
 
@@ -57,7 +59,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
 
             var dependencyResolverSetup = DependencyResolverSetup.Create(ServiceProvider);
             var actorSystemSetup = bootstrapSetup.And(dependencyResolverSetup);
-            var actorSystem = ActorSystem.Create(ActorSystemName, actorSystemSetup);
+            var actorSystem = ActorSystem.Create(ActorSystemName, actorSystemSetup);            
 
             return actorSystem;
         }

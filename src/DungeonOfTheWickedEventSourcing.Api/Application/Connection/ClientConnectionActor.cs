@@ -1,33 +1,53 @@
 ﻿using Akka.Actor;
 using Akka.IO;
+using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Akka;
+using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Commands;
+using DungeonOfTheWickedEventSourcing.Common.Akka.Events;
 using DungeonOfTheWickedEventSourcing.Common.Tools;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 {
     public class ClientConnectionActor : InjectionReceiveActorBase<ClientConnectionActor>
     {
+        private readonly Guid _connectionId;
         private readonly System.Net.EndPoint _endPoint;
         private IActorRef _client;
 
         private FramedWebSocketMessage _framedWebSocketMessage;
 
-        public ClientConnectionActor(IServiceProvider serviceProvider, System.Net.EndPoint endPoint) : base(serviceProvider)
+        public ClientConnectionActor(Guid connectionId, IServiceProvider serviceProvider, System.Net.EndPoint endPoint) : base(serviceProvider)
         {
+            _connectionId = connectionId;
             _endPoint = endPoint;
 
             Receive<string>(OnDecoded);
             ReceiveAsync<byte[]>(OnBytesReceivedAsync);
 
             Receive<Tcp.Received>(OnReceived);
-            Receive<Tcp.PeerClosed>(OnPeerClosed);
+            ReceiveAsync<Tcp.PeerClosed>(OnPeerClosedAsync);
+
+            Receive<IClientNotification>(OnNotifyClient);
         }
 
         private void OnDecoded(string message)
         {
-            Logger.LogInformation("{ActorName} started on {Endpoint} received a string message: {message}", Self.Path.Name, _endPoint.ToString(), message);
+            Logger.LogInformation("{ActorName} on {Endpoint} received a string message: {message}", Self.Path.Name, _endPoint.ToString(), message);
+
+            if (message.Contains(nameof(GenerateDungeonCommand)))
+            {
+                Context.System.EventStream.Publish(new GenerateDungeonCommand { ConnectionId = _connectionId });
+                return;
+            }
+
+            if (message.Contains(nameof(DiscoverHierarchyCommand)))
+            {
+                Context.System.EventStream.Publish(new DiscoverHierarchyCommand());
+                return;
+            }
 
             // TODO: Deserialize into typed messages!
             // Then publish it to the eventstream
@@ -41,7 +61,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 memoryStream.Write(receivedBytes.ToArray());
                 memoryStream.Position = 0;
 
-                var webSocket = WebSocket.CreateFromStream(memoryStream, new WebSocketCreationOptions
+                using var webSocket = WebSocket.CreateFromStream(memoryStream, new WebSocketCreationOptions
                 {
                     IsServer = true
                 });
@@ -51,17 +71,12 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 switch (result.MessageType)
                 {
                     case WebSocketMessageType.Text:
-                        var message = Encoding.UTF8.GetString(buffer[..result.Count]);
+                        var message = Encoding.UTF8.GetString(buffer[..result.Count]);                        
                         Self.Forward(message);
                         return;
 
-                    case WebSocketMessageType.Binary:
+                    case WebSocketMessageType.Binary:                        
                         throw new NotSupportedException("Binary messages are not supported!");
-
-                    case WebSocketMessageType.Close:
-                        Logger.LogWarning("Connection close message received!");
-                        Sender.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.CloseMessage)));
-                        return;
 
                     default:
                         return;
@@ -70,6 +85,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error during OnReceivedAsync!");
+                await Self.GracefulStop(TimeSpan.FromSeconds(5));
             }
         }
 
@@ -80,24 +96,44 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 _client = Sender;
             }
 
-            var key = WebSocketMessageTools.GetSecWebSocketKey(received.Data.ToString());
-            if (!string.IsNullOrEmpty(key))
+            var webSocketKey = WebSocketMessageTools.GetSecWebSocketKey(received.Data.ToString());
+            if (!string.IsNullOrEmpty(webSocketKey))
             {
-                Sender.Tell(Tcp.Write.Create(ByteString.FromString(WebSocketMessageTools.CreateAck(key))));
+                Sender.Tell(Tcp.Write.Create(ByteString.FromString(WebSocketMessageTools.CreateAck(webSocketKey))));
                 return;
             }
 
-            var totalLength = WebSocketMessageTools.GetMessageTotalLength(received.Data.ToArray());
-            if (totalLength > (ulong)received.Data.Count)
+            var receivedBytes = received.Data.ToArray();
+            var messageType = WebSocketMessageTools.GetMessageType(receivedBytes);
+            switch (messageType)
+            {
+                case StandardWebSocketMessageType.Ping:
+                    Logger.LogInformation("Received a Ping!");
+                    // Ping is not used yet!
+                    //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PongMessage)));
+                    return;
+                case StandardWebSocketMessageType.Pong:
+                    Logger.LogInformation("Received a Pong!");
+                    // Pong is not used yet!
+                    //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PingMessage)));
+                    return;
+                case StandardWebSocketMessageType.Close:
+                    Logger.LogInformation("Connection close message received!");
+                    _client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.CloseMessage)));
+                    return;
+            }
+
+            var totalLength = WebSocketMessageTools.GetMessageTotalLength(receivedBytes);
+            if (totalLength > (ulong)receivedBytes.Length)
             {
                 _framedWebSocketMessage = new FramedWebSocketMessage(totalLength);
-                _framedWebSocketMessage.Write(received.Data.ToArray());
+                _framedWebSocketMessage.Write(receivedBytes);
                 BecomeStacked(OnFrameReceived);
                 return;
             }
             else
             {
-                Self.Forward(received.Data.ToArray());
+                Self.Forward(receivedBytes);
             }
         }
 
@@ -129,9 +165,27 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
             }
         }
 
-        private void OnPeerClosed(Tcp.PeerClosed peerClosed)
+        private async Task OnPeerClosedAsync(Tcp.PeerClosed peerClosed)
         {
-            Logger.LogInformation("{ActorName} started on {Endpoint} received a peerClosed message: {cause}", Self.Path.Name, _endPoint.ToString(), peerClosed.Cause);
+            Logger.LogInformation("{ActorName} on {Endpoint} received a peerClosed message: {cause}", Self.Path.Name, _endPoint.ToString(), peerClosed.Cause);
+            await Self.GracefulStop(TimeSpan.FromSeconds(5));
+        }
+
+        private void OnNotifyClient(IClientNotification notifyClient)
+        {
+            var firstNonInterfaceType = GetFirstNonInterfaceType(notifyClient.GetType());
+            _client?.Tell(TcpTools.CreateWsClientMessage(JsonSerializer.Serialize(notifyClient, firstNonInterfaceType, JsonSerializerOptions.Default)));
+        }
+
+        private Type GetFirstNonInterfaceType(Type type)
+        {
+            if (type?.IsInterface ?? false)
+            {
+                var result = GetFirstNonInterfaceType(type.UnderlyingSystemType);
+                return result ?? type;
+            }
+
+            return type;
         }
 
         protected override void PreStart()

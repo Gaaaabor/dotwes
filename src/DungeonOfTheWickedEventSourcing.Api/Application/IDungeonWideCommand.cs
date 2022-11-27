@@ -2,5 +2,6 @@
 {
     public interface IDungeonWideCommand
     {
+        public Guid ConnectionId { get; set; }
     }
 }

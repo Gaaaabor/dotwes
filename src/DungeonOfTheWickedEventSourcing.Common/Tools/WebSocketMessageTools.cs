@@ -6,9 +6,10 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
 {
     public static class WebSocketMessageTools
     {
-        private static readonly byte EXT = 0x03;
         private static readonly Regex _keyMatcher = new("Sec-WebSocket-Key: (.*)");
         public static byte[] CloseMessage = new byte[4] { 136, 2, 3, 232 };
+        public static byte[] PingMessage = new byte[4] { 137, 2, 3, 232 };
+        public static byte[] PongMessage = new byte[4] { 138, 2, 3, 232 };
 
         /// <summary>
         /// Extracts the Sec-WebSocket-Key from the message, if not found empty string will be returned.
@@ -42,27 +43,27 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             var masked = (packets[1] & 1 << 7) != 0;
             var pseudoLength = packets[1] - (masked ? 128 : 0);
 
-            ulong actualLength = 0;
+            ulong totalLength = 0;
             if (pseudoLength > 0 && pseudoLength < 125)
             {
-                actualLength = (ulong)pseudoLength;
+                totalLength = (ulong)pseudoLength;
             }
             else if (pseudoLength == 126)
             {
                 var length = new byte[2];
-                messageStream.Read(length, 0, length.Length);                
+                messageStream.Read(length, 0, length.Length);
                 Array.Reverse(length);
-                actualLength = BitConverter.ToUInt16(length, 0);
+                totalLength = BitConverter.ToUInt16(length, 0);
             }
             else if (pseudoLength == 127)
             {
                 var length = new byte[8];
-                messageStream.Read(length, 0, length.Length);                
+                messageStream.Read(length, 0, length.Length);
                 Array.Reverse(length);
-                actualLength = BitConverter.ToUInt64(length, 0);
+                totalLength = BitConverter.ToUInt64(length, 0);
             }
 
-            return actualLength;
+            return totalLength;
         }
 
         public static byte[] Encode(byte[] messageBytes, bool masking = false, bool isBinary = false)
@@ -90,6 +91,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
                 var opcode = isBinary
                     ? 0x2
                     : 0x1;
+
                 firstbyte += (byte)opcode; // Text
                 packet.WriteByte(firstbyte);
 
@@ -156,8 +158,8 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             const string eol = "\r\n"; // HTTP/1.1 defines the sequence CR LF as the end-of-line marker
 
             var keyWithMagic = string.Concat(key, magic);
-            var stuff = SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(keyWithMagic));
-            var accept = Convert.ToBase64String(stuff);
+            var keyWithMagicHashed = SHA1.HashData(Encoding.UTF8.GetBytes(keyWithMagic));
+            var keyWithMagicBase64 = Convert.ToBase64String(keyWithMagicHashed);
 
             var ackBuilder = new StringBuilder("HTTP/1.1 101 Switching Protocols");
             ackBuilder.Append(eol);
@@ -165,26 +167,39 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             ackBuilder.Append(eol);
             ackBuilder.Append("Connection: Upgrade");
             ackBuilder.Append(eol);
-            ackBuilder.Append($"Sec-WebSocket-Accept: {accept}");
+            ackBuilder.Append($"Sec-WebSocket-Accept: {keyWithMagicBase64}");
             ackBuilder.Append(eol);
             ackBuilder.Append(eol);
 
             return ackBuilder.ToString();
         }
 
-        public static bool IsCloseMessage(byte[] message)
+        public static StandardWebSocketMessageType GetMessageType(byte[] messageBytes)
         {
-            if (message.Length == 2)
+            StandardWebSocketMessageType messageType = (messageBytes[0] & 15) switch
             {
-                return message.SequenceEqual(new byte[] { EXT, 232 });
+                0 => StandardWebSocketMessageType.Continuation,
+                1 => StandardWebSocketMessageType.Text,
+                2 => StandardWebSocketMessageType.Binary,
+                8 => StandardWebSocketMessageType.Close,
+                9 => StandardWebSocketMessageType.Ping,
+                10 => StandardWebSocketMessageType.Pong,
+                _ => StandardWebSocketMessageType.Invalid,
+            };
+
+            if (messageType == StandardWebSocketMessageType.Invalid)
+            {
+                return messageType;
             }
 
-            if (message.Length == 4)
+            // FIN, RSV1, RSV2, RSV3, OP,OP,OP,OP none of the RSV bits should be set
+            var isReservedFlags = (messageBytes[0] & 112) != 0;
+            if (isReservedFlags)
             {
-                return message.SequenceEqual(CloseMessage);
+                return StandardWebSocketMessageType.Invalid;
             }
 
-            return false;
+            return messageType;
         }
 
         private static byte[] ApplyMask(IReadOnlyList<byte> message, IReadOnlyList<byte> mask)
@@ -196,6 +211,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             }
 
             return decoded;
-        }
+        }        
     }
 }

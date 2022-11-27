@@ -13,7 +13,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
         {
             Context.System
                 .Tcp()
-                .Tell(new Tcp.Bind(Self, new IPEndPoint(IPAddress.Any, port)));
+                .Tell(new Tcp.Bind(Self, new IPEndPoint(IPAddress.Any, port), options: new[] { new Inet.SO.ReceiveBufferSize(1024) }));
 
             Receive<Tcp.Bound>(OnBound);
             Receive<Tcp.Connected>(OnConnected);
@@ -21,15 +21,16 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 
         protected virtual void OnBound(Tcp.Bound bound)
         {
-            Logger.LogInformation("Listening on {LocalAddress}", bound.LocalAddress);
+            Logger.LogInformation("{ActorName} Listening on {LocalAddress}", nameof(ClientConnectionManagerActor), bound.LocalAddress);
         }
 
         protected virtual void OnConnected(Tcp.Connected connected)
         {
-            Logger.LogInformation("Connected to {RemoteAddress}", connected.RemoteAddress);
+            Logger.LogInformation("{ActorName} received a connection from {RemoteAddress}", nameof(ClientConnectionManagerActor), connected.RemoteAddress);
 
-            var connectionId = Guid.NewGuid().ToString("N");
-            var clientConnectionActor = CreateChildActor<ClientConnectionActor>(name: connectionId, connected.RemoteAddress);
+            var connectionId = Guid.NewGuid();
+            var name = $"clientconnection_{connected.RemoteAddress}_{connectionId:N}";
+            var clientConnectionActor = CreateChildActor<ClientConnectionActor>(name: name, connectionId, connected.RemoteAddress);
             Sender.Tell(new Tcp.Register(clientConnectionActor));
         }
     }

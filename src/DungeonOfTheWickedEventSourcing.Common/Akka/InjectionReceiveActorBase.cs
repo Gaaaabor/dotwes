@@ -10,7 +10,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
     public abstract class InjectionReceiveActorBase<TActor> : ReceiveActor where TActor : ReceiveActor
     {
         private readonly IServiceScope _serviceScope;
-        private readonly DependencyResolver _dependencyResolver;
+        private readonly DependencyResolver _dependencyResolver;        
 
         protected ILogger Logger { get; }
         protected IActorRef Mediator { get; }
