@@ -5,6 +5,7 @@
 @using System.Threading
 @using System.Text.Json;
 @using System.Drawing;
+@using DungeonOfTheWickedEventSourcing.Web.Models.Dungeon;
 @implements IDisposable
 @inject IConfiguration _configuration
 
@@ -50,13 +51,14 @@
     CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
     ClientWebSocket _clientWebSocket = new ClientWebSocket();
     List<DungeonGenerated> _dungeons = new List<DungeonGenerated>();
+    string _serverUrl;
     string _message = "Hello, websocket!";
     string _log = "";
 
     protected override async Task OnInitializedAsync()
     {
-        var serverUrl = _configuration.GetValue<string>("ServerUrl");
-        await _clientWebSocket.ConnectAsync(new Uri(serverUrl), _cancellationTokenSource.Token);
+        _serverUrl = _configuration.GetValue<string>("ServerUrl");
+        await _clientWebSocket.ConnectAsync(new Uri(_serverUrl), _cancellationTokenSource.Token);
         _ = ReceiveLoop();
     }
 
@@ -77,22 +79,35 @@
     private async Task ReceiveLoop()
     {
         var buffer = new ArraySegment<byte>(new byte[1024]);
+        var messageBuilder = new StringBuilder();
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            // Note that the received block might only be part of a larger message. If this applies in your scenario,
-            // check the received.EndOfMessage and consider buffering the blocks until that property is true.
-            // Or use a higher-level library such as SignalR.
-            var received = await _clientWebSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
-            var receivedAsText = Encoding.UTF8.GetString(buffer.Array, 0, received.Count);
-
-            if (receivedAsText.Contains("DungeonId"))
+            if (_clientWebSocket.State != WebSocketState.Open)
             {
-                var dungeonGenerated = JsonSerializer.Deserialize<DungeonGenerated>(receivedAsText);
-                _dungeons.Add(dungeonGenerated);
+                await Task.Delay(1000);
+                await _clientWebSocket.ConnectAsync(new Uri(_serverUrl), _cancellationTokenSource.Token);
+                continue;
             }
 
-            _log += $"Received: {receivedAsText}\n";
-            StateHasChanged();
+            var received = await _clientWebSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
+            var receivedAsText = Encoding.UTF8.GetString(buffer.Array, 0, received.Count);
+            messageBuilder.Append(receivedAsText);
+
+            if (received.EndOfMessage)
+            {
+                var completedMessage = messageBuilder.ToString();
+                messageBuilder.Clear();
+
+                // TODO: Fix
+                if (receivedAsText.Contains(nameof(DungeonGenerated.DungeonId)))
+                {
+                    var dungeonGenerated = JsonSerializer.Deserialize<DungeonGenerated>(receivedAsText);
+                    _dungeons.Add(dungeonGenerated);
+                }
+
+                _log += $"Received: {receivedAsText}\n";
+                StateHasChanged();
+            }
         }
     }
 
@@ -100,11 +115,5 @@
     {
         _cancellationTokenSource.Cancel();
         _ = _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Bye", CancellationToken.None);
-    }
-
-    public class DungeonGenerated
-    {
-        public Guid DungeonId { get; set; }
-        public Size Size { get; set; }
     }
 }
