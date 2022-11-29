@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DungeonOfTheWickedEventSourcing.Web", "DungeonOfTheWickedEventSourcing.Web\DungeonOfTheWickedEventSourcing.Web.csproj", "{2E26D7C8-719E-4D3F-B71F-44659CF8238E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{02D38BE1-ADAA-4ACB-95E8-FE294724ED2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{02D38BE1-ADAA-4ACB-95E8-FE294724ED2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02D38BE1-ADAA-4ACB-95E8-FE294724ED2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

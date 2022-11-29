@@ -17,11 +17,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ConnectionString="dotwes-redis,password=LocalPass"
-      - Port=5014
-      - SeedNodeHostNames=dotwes-api:5014
+      - Port=5013
+      - SeedNodeHostNames=dotwes-api:5013
+      - ClientConnectionPort=5014
     ports:
-      - "80:80"
-      - "443:443"
+      - "5014:5014"
+      - "5013"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro

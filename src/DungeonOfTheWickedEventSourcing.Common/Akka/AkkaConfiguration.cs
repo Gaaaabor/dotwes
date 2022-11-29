@@ -10,6 +10,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         public const string Roles = nameof(Roles);
         public const string SeedNodeHostNames = nameof(SeedNodeHostNames);
         public const string Port = nameof(Port);
+        public const string ClientConnectionPort = nameof(ClientConnectionPort);
 
         public static Config GetRedisPersistenceConfiguration(string connectionString)
         {

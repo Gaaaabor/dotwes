@@ -1,0 +1,117 @@
+﻿@page "/hierarchy"
+
+@using System.Net.WebSockets
+@using System.Text
+@using System.Threading
+@using System.Text.Json;
+@using System.Drawing;
+@using DungeonOfTheWickedEventSourcing.Web.Models.Hierarchy;
+@implements IDisposable
+@inject IConfiguration _configuration
+
+<h1>Hierarchy</h1>
+<h3>State: @_clientWebSocket.State</h3>
+
+@if (_clientWebSocket.State == WebSocketState.Open)
+{
+    <button @onclick="@GetHierarchyAsync">
+        Get Hierarchy
+    </button>
+}
+<hr>
+@{
+    <div class="tf-tree">
+        @if (_hierarchy != null)
+        {
+            DrawHierarchy(new[] { _hierarchy });
+        }
+    </div>
+
+    <hr>
+
+    <pre>@_log</pre>
+
+    void DrawHierarchy(IEnumerable<ActorHierarchyNode> actorHierarchyNodes)
+    {
+        if (!actorHierarchyNodes.Any())
+        {
+            return;
+        }
+
+        <ul>
+            @foreach (var child in actorHierarchyNodes)
+            {
+                <li>
+                    <span class="tf-nc">@child.Name</span>
+                    @{
+                        DrawHierarchy(child.Children);
+                    }
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    ClientWebSocket _clientWebSocket = new ClientWebSocket();
+    RootNode _hierarchy;
+    string _serverUrl;
+    string _message = "Hello, websocket!";
+    string _log = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _serverUrl = _configuration.GetValue<string>("ServerUrl");
+        await _clientWebSocket.ConnectAsync(new Uri(_serverUrl), _cancellationTokenSource.Token);
+        _ = ReceiveLoop();
+    }
+
+    private async Task GetHierarchyAsync()
+    {
+        var message = new ArraySegment<byte>(Encoding.UTF8.GetBytes("{\"type\":\"DiscoverHierarchyCommand\"}"));
+        _log += $"Sending: DiscoverHierarchyCommand\n";
+        await _clientWebSocket.SendAsync(message, WebSocketMessageType.Text, true, _cancellationTokenSource.Token);
+    }
+
+    private async Task ReceiveLoop()
+    {
+        var buffer = new ArraySegment<byte>(new byte[1024]);
+        var messageBuilder = new StringBuilder();
+        while (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            if (_clientWebSocket.State != WebSocketState.Open)
+            {
+                await Task.Delay(1000);
+                await _clientWebSocket.ConnectAsync(new Uri(_serverUrl), _cancellationTokenSource.Token);
+                continue;
+            }
+
+            var received = await _clientWebSocket.ReceiveAsync(buffer, _cancellationTokenSource.Token);
+            var receivedAsText = Encoding.UTF8.GetString(buffer.Array, 0, received.Count);
+            messageBuilder.Append(receivedAsText);
+
+            if (received.EndOfMessage)
+            {
+                var completedMessage = messageBuilder.ToString();
+                messageBuilder.Clear();
+
+                // TODO: Fix
+                if (completedMessage.Contains(nameof(RootNodeContainer.Root)))
+                {
+                    var rootNodeContainer = JsonSerializer.Deserialize<RootNodeContainer>(completedMessage);
+                    _hierarchy = rootNodeContainer.Root;
+                }
+
+                _log += $"Received: {completedMessage}\n";
+                StateHasChanged();
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _cancellationTokenSource.Cancel();
+        _ = _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Bye", CancellationToken.None);
+    }
+}

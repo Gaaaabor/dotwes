@@ -15,9 +15,9 @@ namespace DungeonOfTheWickedEventSourcing.Api
             CreateChildActor<DungeonGuardianActor>(DungeonGuardianActor.ActorName);
 
             var configuration = ServiceProvider.GetService<IConfiguration>();
-            var port = configuration.GetValue(AkkaConfiguration.Port, 0);
+            var clientConnectionPort = configuration.GetValue(AkkaConfiguration.ClientConnectionPort, 0);
 
-            CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, port);
+            CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, clientConnectionPort);
         }
     }
 }

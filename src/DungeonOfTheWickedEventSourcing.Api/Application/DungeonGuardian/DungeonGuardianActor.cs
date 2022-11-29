@@ -1,4 +1,5 @@
 ﻿using Akka.Actor;
+using Akka.Event;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Akka;
@@ -9,24 +10,22 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian
     {
         public const string ActorName = "dungeonguardian";
 
-        private readonly Dictionary<string, IActorRef> _dungeons = new Dictionary<string, IActorRef>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<Guid, IActorRef> _dungeons = new Dictionary<Guid, IActorRef>();
 
         public DungeonGuardianActor(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            Context.System.EventStream.Subscribe(Self, typeof(IDungeonGuardianCommand));
+            Context.System.EventStream.Subscribe<IDungeonGuardianCommand>(Self);
 
-            Receive<GenerateDungeonCommand>(OnGenerateDungeonCommand);
+            Receive<GenerateDungeonCommand>(OnGenerateDungeonCommand);            
         }
 
         private void OnGenerateDungeonCommand(GenerateDungeonCommand generateDungeonCommand)
         {
-            var name = $"dungeon-{Guid.NewGuid():N}";
-            var dungeon = CreateChildActor<DungeonActor>(name);
+            var dungeonId = Guid.NewGuid();
+            var dungeon = CreateChildActor<DungeonActor>(name: $"dungeon-{dungeonId:N}", dungeonId);
             dungeon.Forward(generateDungeonCommand);
 
-            _dungeons.Add(name, dungeon);
-
-            Sender.Tell(name);
+            _dungeons.Add(dungeonId, dungeon);
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Akka.Actor;
+using Akka.Event;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon.Commands;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon.Events;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
+using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Events;
 using DungeonOfTheWickedEventSourcing.Api.Application.Enemy;
 using DungeonOfTheWickedEventSourcing.Api.Application.Loot;
 using DungeonOfTheWickedEventSourcing.Common.Akka;
@@ -14,13 +16,15 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
         private readonly Dictionary<string, IActorRef> _loots = new Dictionary<string, IActorRef>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, IActorRef> _enemies = new Dictionary<string, IActorRef>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, IActorRef> _floors = new Dictionary<string, IActorRef>(StringComparer.OrdinalIgnoreCase);
+        private readonly Guid _dungeonId;
         private Size _size;
 
-        public DungeonActor(IServiceProvider serviceProvider) : base(serviceProvider)
+        public DungeonActor(Guid dungeonId, IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            Context.System.EventStream.Subscribe(Self, typeof(IDungeonCommand));
+            Context.System.EventStream.Subscribe<IDungeonCommand>(Self);
 
             Receive<GenerateDungeonCommand>(OnGenerateCommand);
+            _dungeonId = dungeonId;
         }
 
         private void OnGenerateCommand(GenerateDungeonCommand generateCommand)
@@ -31,6 +35,12 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
             GenerateFloors();
 
             Become(Undiscovered);
+
+            Sender.Tell(new DungeonGeneratedEvent
+            {
+                DungeonId = _dungeonId,
+                Size = _size
+            });
         }
 
         #region //Generation logic (This part should be moved to a DungeonBuilder class later)
@@ -59,9 +69,10 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
 
         private void GenerateFloors()
         {
-            var name = $"floor-{Guid.NewGuid():N}";
-            var floor = CreateChildActor<DungeonActor>(name);
-            _floors.Add(name, floor);
+            var floorId = Guid.NewGuid();
+            var floorName = $"floor-{floorId:N}";
+            var floor = CreateChildActor<DungeonActor>(name: floorName, floorId);
+            _floors.Add(floorName, floor);
         }
 
         #endregion //Generation logic
