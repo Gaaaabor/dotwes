@@ -5,9 +5,6 @@ using DungeonOfTheWickedEventSourcing.Common.Akka;
 using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Akka.Events;
 using DungeonOfTheWickedEventSourcing.Common.Tools;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 {
@@ -24,168 +21,149 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
             _connectionId = connectionId;
             _endPoint = endPoint;
 
-            Receive<string>(OnDecoded);
-            ReceiveAsync<byte[]>(OnBytesReceivedAsync);
+            Receive<string>(OnStringReceived);
 
-            Receive<Tcp.Received>(OnReceived);
-            ReceiveAsync<Tcp.PeerClosed>(OnPeerClosedAsync);
+            ReceiveAsync<Tcp.Received>(OnReceivedAsync);
+            Receive<Tcp.PeerClosed>(OnPeerClosed);
 
-            Receive<IClientNotification>(OnNotifyClient);
+            ReceiveAsync<IClientNotification>(OnNotifyClientAsync);
         }
 
-        private void OnDecoded(string message)
-        {
-            Logger.LogInformation("{ActorName} on {Endpoint} received a string message: {message}", Self.Path.Name, _endPoint.ToString(), message);
-
-            if (message.Contains(nameof(GenerateDungeonCommand)))
-            {
-                Context.System.EventStream.Publish(new GenerateDungeonCommand { ConnectionId = _connectionId });
-                return;
-            }
-
-            if (message.Contains(nameof(DiscoverHierarchyCommand)))
-            {
-                Context.System.EventStream.Publish(new DiscoverHierarchyCommand());
-                return;
-            }
-
-            // TODO: Deserialize into typed messages!
-            // Then publish it to the eventstream
-        }
-
-        private async Task OnBytesReceivedAsync(byte[] receivedBytes)
+        private void OnStringReceived(string message)
         {
             try
             {
-                using var memoryStream = new MemoryStream();
-                memoryStream.Write(receivedBytes.ToArray());
-                memoryStream.Position = 0;
+                Logger.LogInformation("{ActorName} on {Endpoint} received a string message: {message}", Self.Path.Name, _endPoint.ToString(), message);
 
-                using var webSocket = WebSocket.CreateFromStream(memoryStream, new WebSocketCreationOptions
+                // TODO: Deserialize into typed messages using a base type!
+                // Then publish it to the eventstream
+
+                if (message.Contains(nameof(GenerateDungeonCommand)))
                 {
-                    IsServer = true
-                });
+                    Context.System.EventStream.Publish(new GenerateDungeonCommand { ConnectionId = _connectionId });
+                    return;
+                }
 
-                var buffer = WebSocket.CreateServerBuffer(receivedBytes.Length);
-                var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                switch (result.MessageType)
+                if (message.Contains(nameof(DiscoverHierarchyCommand)))
                 {
-                    case WebSocketMessageType.Text:
-                        var message = Encoding.UTF8.GetString(buffer[..result.Count]);                        
-                        Self.Forward(message);
-                        return;
-
-                    case WebSocketMessageType.Binary:                        
-                        throw new NotSupportedException("Binary messages are not supported!");
-
-                    default:
-                        return;
+                    Context.System.EventStream.Publish(new DiscoverHierarchyCommand());
+                    return;
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error during OnReceivedAsync!");
-                await Self.GracefulStop(TimeSpan.FromSeconds(5));
+                Logger.LogError(ex, "Error during {Name}!", nameof(OnStringReceived));
             }
         }
 
-        private void OnReceived(Tcp.Received received)
+        private async Task OnReceivedAsync(Tcp.Received received)
         {
             if (_client is null)
             {
                 _client = Sender;
             }
 
-            var webSocketKey = WebSocketMessageTools.GetSecWebSocketKey(received.Data.ToString());
-            if (!string.IsNullOrEmpty(webSocketKey))
+            try
             {
-                Sender.Tell(Tcp.Write.Create(ByteString.FromString(WebSocketMessageTools.CreateAck(webSocketKey))));
-                return;
-            }
-
-            var receivedBytes = received.Data.ToArray();
-            var messageType = WebSocketMessageTools.GetMessageType(receivedBytes);
-            switch (messageType)
-            {
-                case StandardWebSocketMessageType.Ping:
-                    Logger.LogInformation("Received a Ping!");
-                    // Ping is not used yet!
-                    //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PongMessage)));
-                    return;
-                case StandardWebSocketMessageType.Pong:
-                    Logger.LogInformation("Received a Pong!");
-                    // Pong is not used yet!
-                    //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PingMessage)));
-                    return;
-                case StandardWebSocketMessageType.Close:
-                    Logger.LogInformation("Connection close message received!");
-                    _client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.CloseMessage)));
-                    return;
-            }
-
-            var totalLength = WebSocketMessageTools.GetMessageTotalLength(receivedBytes);
-            if (totalLength > (ulong)receivedBytes.Length)
-            {
-                _framedWebSocketMessage = new FramedWebSocketMessage(totalLength);
-                _framedWebSocketMessage.Write(receivedBytes);
-                BecomeStacked(OnFrameReceived);
-                return;
-            }
-            else
-            {
-                Self.Forward(receivedBytes);
-            }
-        }
-
-        private void OnFrameReceived(object rawFrame)
-        {
-            if (rawFrame is Tcp.Received frame)
-            {
-                if (_framedWebSocketMessage is null)
+                var secWebSocketKey = WebSocketMessageTools.GetSecWebSocketKey(received.Data.ToString());
+                if (!string.IsNullOrEmpty(secWebSocketKey))
                 {
-                    UnbecomeStacked();
-                    Self.Forward(frame);
+                    Sender.Tell(Tcp.Write.Create(ByteString.FromString(WebSocketMessageTools.CreateAck(secWebSocketKey))));
                     return;
                 }
 
-                _framedWebSocketMessage.Write(frame.Data.ToArray());
-            }
-            else
-            {
-                Self.Forward(rawFrame);
-                return;
-            }
+                var receivedBytes = received.Data.ToArray();
+                var messageType = WebSocketMessageTools.GetMessageType(receivedBytes);
+                switch (messageType)
+                {
+                    case StandardWebSocketMessageType.Binary:
+                        throw new NotSupportedException("Binary messages are not supported!");
 
-            if (_framedWebSocketMessage.IsCompleted())
+                    case StandardWebSocketMessageType.Ping:
+                        Logger.LogInformation("Received a Ping!");
+                        // Ping is not used yet!
+                        //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PongMessage)));
+                        return;
+                    case StandardWebSocketMessageType.Pong:
+                        Logger.LogInformation("Received a Pong!");
+                        // Pong is not used yet!
+                        //_client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.PingMessage)));
+                        return;
+                    case StandardWebSocketMessageType.Close:
+                        Logger.LogInformation("Connection close message received!");
+                        _client.Tell(Tcp.Write.Create(ByteString.FromBytes(WebSocketMessageTools.CloseMessage)));
+                        return;
+                }
+
+                var totalLength = WebSocketMessageTools.GetMessageTotalLength(receivedBytes);
+                if (totalLength > (ulong)receivedBytes.Length)
+                {
+                    _framedWebSocketMessage = new FramedWebSocketMessage(totalLength);
+                    _framedWebSocketMessage.Write(receivedBytes);
+                    BecomeStacked(() =>
+                    {
+                        ReceiveAsync<object>(OnFrameReceivedAsync);
+                    });
+
+                    return;
+                }
+
+                var receivedMessage = await TcpTools.ReadMessageBytesAsync(receivedBytes);
+                Self.Forward(receivedMessage);
+            }
+            catch (Exception ex)
             {
-                UnbecomeStacked();
-                Self.Forward(_framedWebSocketMessage.ReadAllBytes());
-                _framedWebSocketMessage.Close();
-                _framedWebSocketMessage = null;
+                Logger.LogError(ex, "Error during {Name}!", nameof(OnReceivedAsync));
+                await Self.GracefulStop(TimeSpan.FromSeconds(5));
             }
         }
 
-        private async Task OnPeerClosedAsync(Tcp.PeerClosed peerClosed)
+        private async Task OnFrameReceivedAsync(object rawFrame)
+        {
+            try
+            {
+                if (rawFrame is Tcp.Received frame)
+                {
+                    if (_framedWebSocketMessage is null)
+                    {
+                        UnbecomeStacked();
+                        Self.Forward(frame);
+                        return;
+                    }
+
+                    _framedWebSocketMessage.Write(frame.Data.ToArray());
+                }
+                else
+                {
+                    Self.Forward(rawFrame);
+                    return;
+                }
+
+                if (_framedWebSocketMessage.IsCompleted())
+                {
+                    UnbecomeStacked();
+                    var receivedMessage = await TcpTools.ReadMessageBytesAsync(_framedWebSocketMessage.ReadAllBytes());
+                    Self.Forward(receivedMessage);
+                    _framedWebSocketMessage.Close();
+                    _framedWebSocketMessage = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error during {Name}!", nameof(OnFrameReceivedAsync));
+            }
+        }
+
+        private void OnPeerClosed(Tcp.PeerClosed peerClosed)
         {
             Logger.LogInformation("{ActorName} on {Endpoint} received a peerClosed message: {cause}", Self.Path.Name, _endPoint.ToString(), peerClosed.Cause);
-            await Self.GracefulStop(TimeSpan.FromSeconds(5));
+            Context.Stop(Self);
         }
 
-        private void OnNotifyClient(IClientNotification notifyClient)
+        private async Task OnNotifyClientAsync(IClientNotification notifyClient)
         {
-            var firstNonInterfaceType = GetFirstNonInterfaceType(notifyClient.GetType());
-            _client?.Tell(TcpTools.CreateWsClientMessage(JsonSerializer.Serialize(notifyClient, firstNonInterfaceType, JsonSerializerOptions.Default)));
-        }
-
-        private Type GetFirstNonInterfaceType(Type type)
-        {
-            if (type?.IsInterface ?? false)
-            {
-                var result = GetFirstNonInterfaceType(type.UnderlyingSystemType);
-                return result ?? type;
-            }
-
-            return type;
+            var message = await TcpTools.CreateTcpWriteMessageAsync(notifyClient);
+            _client?.Tell(message);
         }
 
         protected override void PreStart()

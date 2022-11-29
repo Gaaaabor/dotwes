@@ -66,82 +66,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
             return totalLength;
         }
 
-        public static byte[] Encode(byte[] messageBytes, bool masking = false, bool isBinary = false)
-        {
-            var mask = new byte[4];
-            if (masking)
-            {
-                new Random().NextBytes(mask);
-            }
-
-            if (masking && mask is null)
-            {
-                throw new ArgumentException(nameof(mask));
-            }
-
-            using (var packet = new MemoryStream())
-            {
-                byte firstbyte = 0b0_0_0_0_0000; // fin | rsv1 | rsv2 | rsv3 | [ OPCODE | OPCODE | OPCODE | OPCODE ]
-
-                firstbyte |= 0b1_0_0_0_0000; // fin
-                //firstbyte |= 0b0_1_0_0_0000; // rsv1
-                //firstbyte |= 0b0_0_1_0_0000; // rsv2
-                //firstbyte |= 0b0_0_0_1_0000; // rsv3
-
-                var opcode = isBinary
-                    ? 0x2
-                    : 0x1;
-
-                firstbyte += (byte)opcode; // Text
-                packet.WriteByte(firstbyte);
-
-                // Set bit: bytes[byteIndex] |= mask;
-
-                byte secondbyte = 0b0_0000000; // mask | [SIZE | SIZE  | SIZE  | SIZE  | SIZE  | SIZE | SIZE]
-
-                if (masking)
-                {
-                    secondbyte |= 0b1_0000000; // mask
-                }
-
-                if (messageBytes.LongLength <= 0b0_1111101) // 125
-                {
-                    secondbyte |= (byte)messageBytes.Length;
-                    packet.WriteByte(secondbyte);
-                }
-                else if (messageBytes.LongLength <= ushort.MaxValue) // If length takes 2 bytes
-                {
-                    secondbyte |= 0b0_1111110; // 126
-                    packet.WriteByte(secondbyte);
-
-                    var len = BitConverter.GetBytes(messageBytes.LongLength);
-                    Array.Reverse(len, 0, 2);
-                    packet.Write(len, 0, 2);
-                }
-                else // if (payload.LongLength <= Int64.MaxValue) // If length takes 8 bytes
-                {
-                    secondbyte |= 0b0_1111111; // 127
-                    packet.WriteByte(secondbyte);
-
-                    var len = BitConverter.GetBytes(messageBytes.LongLength);
-                    Array.Reverse(len, 0, 8);
-                    packet.Write(len, 0, 8);
-                }
-
-                if (masking)
-                {
-                    packet.Write(mask, 0, 4);
-                    messageBytes = ApplyMask(messageBytes, mask);
-                }
-
-                // Write all data to the packet
-                packet.Write(messageBytes, 0, messageBytes.Length);
-
-                var encodedMessage = packet.ToArray();
-                return encodedMessage;
-            }
-        }
-
         /// <summary>
         ///     Additionally, the server can decide on extension/subprotocol requests here; see Miscellaneous for details.<br />
         ///     The Sec-WebSocket-Accept header is important in that the server must derive it from the Sec-WebSocket-Key that the
@@ -201,16 +125,5 @@ namespace DungeonOfTheWickedEventSourcing.Common.Tools
 
             return messageType;
         }
-
-        private static byte[] ApplyMask(IReadOnlyList<byte> message, IReadOnlyList<byte> mask)
-        {
-            var decoded = new byte[message.Count];
-            for (var i = 0; i < message.Count; i++)
-            {
-                decoded[i] = (byte)(message[i] ^ mask[i % 4]);
-            }
-
-            return decoded;
-        }        
     }
 }
