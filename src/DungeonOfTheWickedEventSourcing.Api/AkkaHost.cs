@@ -6,7 +6,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
 {
     public class AkkaHost : AkkaHostServiceBase
     {
-        public AkkaHost(IServiceProvider serviceProvider) : base(serviceProvider)
+        public AkkaHost(IServiceProvider serviceProvider, ILogger<AkkaHost> logger) : base(serviceProvider, logger)
         { }
 
         public override async Task StartAsync(CancellationToken cancellationToken)

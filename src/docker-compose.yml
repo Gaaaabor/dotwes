@@ -23,3 +23,10 @@ services:
       dockerfile: DungeonOfTheWickedEventSourcing.Api/Dockerfile
     networks:
       - dotwes-redis-bridge
+
+  #dotwes-web:
+  #  build:
+  #    context: .
+  #    dockerfile: DungeonOfTheWickedEventSourcing.Web/Dockerfile
+  #  networks:
+  #    - dotwes-redis-bridge

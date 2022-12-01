@@ -30,7 +30,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 
             var connectionId = Guid.NewGuid();
             var name = $"clientconnection_{connected.RemoteAddress}_{connectionId:N}";
-            var clientConnectionActor = CreateChildActor<ClientConnectionActor>(name: name, connectionId, connected.RemoteAddress);
+            var clientConnectionActor = CreateChildActor<ClientConnectionActor>(name: name, connectionId, connected.RemoteAddress);            
             Sender.Tell(new Tcp.Register(clientConnectionActor));
         }
     }

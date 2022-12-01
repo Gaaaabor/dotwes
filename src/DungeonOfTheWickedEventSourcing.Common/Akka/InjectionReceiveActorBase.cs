@@ -21,7 +21,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
             _dependencyResolver = DependencyResolver.For(Context.System);
             Logger = GetRequiredService<ILogger<TActor>>();
 
-            Mediator = Context.System.GetMediator();
+            Mediator = Context.System.GetMediator(Logger);
         }
 
         protected override void PreStart()

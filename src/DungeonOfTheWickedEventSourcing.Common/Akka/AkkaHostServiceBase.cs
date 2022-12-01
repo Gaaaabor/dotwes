@@ -5,6 +5,7 @@ using DungeonOfTheWickedEventSourcing.Common.Akka.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DungeonOfTheWickedEventSourcing.Common.Akka
 {
@@ -12,33 +13,39 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
     {
         public const string ActorSystemName = "dotwes";
         private const char Separator = ';';
-
+        private readonly ILogger _logger;
         private DependencyResolver _dependencyResolver;
 
         protected IServiceProvider ServiceProvider { get; }
         protected ActorSystem ActorSystem { get; private set; }
         protected IActorRef Mediator { get; private set; }
 
-        public AkkaHostServiceBase(IServiceProvider serviceProvider)
+        public AkkaHostServiceBase(IServiceProvider serviceProvider, ILogger logger)
         {
             ServiceProvider = serviceProvider;
+            _logger = logger;
         }
 
         public virtual Task StartAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("AkkaHostServiceBase initializing...");
+
             ActorSystem = CreateActorSystem();
             _dependencyResolver = DependencyResolver.For(ActorSystem);
             CreateChildActor<ActorWalkerActor>(ActorWalkerActor.ActorName);
 
-            Mediator = ActorSystem.GetMediator();
+            Mediator = ActorSystem.GetMediator(_logger);
 
+            _logger.LogInformation("AkkaHostServiceBase successfully started!");
             return Task.CompletedTask;
         }
 
         public virtual async Task StopAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("AkkaHostServiceBase stopping...");
+
             // strictly speaking this may not be necessary - terminating the ActorSystem would also work
-            // but this call guarantees that the shutdown of the cluster is graceful regardless
+            // but this call guarantees that the shutdown of the cluster is graceful regardless            
             await CoordinatedShutdown.Get(ActorSystem).Run(CoordinatedShutdown.ClrExitReason.Instance);
         }
 
