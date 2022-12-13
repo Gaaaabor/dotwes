@@ -10,7 +10,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - dotwes-redis-bridge
+      - dotwes-bridge
 
   dotwes-api:
     environment:
@@ -24,9 +24,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "5014:5014"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+      - dotwes-bridge
 
   #dotwes-web:
   #  environment:

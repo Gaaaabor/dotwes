@@ -4,13 +4,16 @@ using Akka.DependencyInjection;
 using DungeonOfTheWickedEventSourcing.Common.Akka.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.Metrics;
 
 namespace DungeonOfTheWickedEventSourcing.Common.Akka
 {
     public abstract class InjectionReceiveActorBase<TActor> : ReceiveActor where TActor : ReceiveActor
     {
         private readonly IServiceScope _serviceScope;
-        private readonly DependencyResolver _dependencyResolver;        
+        private readonly DependencyResolver _dependencyResolver;
+        private readonly Meter _meter;
+        private readonly UpDownCounter<int> _counter;
 
         protected ILogger Logger { get; }
         protected IActorRef Mediator { get; }
@@ -22,11 +25,26 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
             Logger = GetRequiredService<ILogger<TActor>>();
 
             Mediator = Context.System.GetMediator(Logger);
+
+            _meter = new Meter("Meter");
+            _counter = _meter.CreateUpDownCounter<int>(typeof(TActor).Name);
+        }
+
+        public override void AroundPreStart()
+        {
+            base.AroundPreStart();
+            _counter.Add(1);
+        }
+
+        public override void AroundPostStop()
+        {
+            base.AroundPostStop();
+            _counter.Add(-1);
         }
 
         protected override void PreStart()
         {
-            Logger.LogInformation("{ActorName} started", Self.Path.Name);
+            Logger.LogInformation("{ActorName} started", Self.Path.Name);            
         }
 
         protected override void PostStop()

@@ -1,0 +1,4 @@
+scrape_configs:
+  - job_name: 'dotwes-otel-collector'
+    static_configs:
+      - targets: ['dotwes-otel-collector:8889']

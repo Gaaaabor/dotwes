@@ -1,7 +1,7 @@
 version: '3.9'
 
 networks:
-  dotwes-redis-bridge:
+  dotwes-bridge:
     driver: bridge
 
 volumes:
@@ -10,23 +10,71 @@ volumes:
 
 services:
 
+  dotwes-otel-collector:
+    #image: otel/opentelemetry-collector
+    image: otel/opentelemetry-collector-contrib:0.42.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./config/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml    
+    networks:
+      - dotwes-bridge
+
+  dotwes-prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - dotwes-bridge
+
+  dotwes-tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./config/tempo/tempo.yaml:/etc/tempo.yaml
+    networks:
+      - dotwes-bridge
+
+  dotwes-loki:
+    image: grafana/loki:latest
+    command: [ "-config.file=/etc/loki/local-config.yaml" ]
+    networks:
+      - dotwes-bridge
+
+  dotwes-grafana:
+    image: grafana/grafana:8.3.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    depends_on:
+      - dotwes-prometheus
+      - dotwes-tempo
+      - dotwes-loki
+    networks:
+      - dotwes-bridge
+
   dotwes-redis:
     image: redis:6.2-alpine
     volumes:
       - cache:/data
     networks:
-      - dotwes-redis-bridge
+      - dotwes-bridge
 
   dotwes-api:
     build:
       context: .
       dockerfile: DungeonOfTheWickedEventSourcing.Api/Dockerfile
     networks:
-      - dotwes-redis-bridge
+      - dotwes-bridge
 
   #dotwes-web:
   #  build:
   #    context: .
   #    dockerfile: DungeonOfTheWickedEventSourcing.Web/Dockerfile
   #  networks:
-  #    - dotwes-redis-bridge
+  #    - dotwes-bridge

@@ -15,7 +15,29 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DungeonOfTheWickedEventSourcing.Web", "DungeonOfTheWickedEventSourcing.Web\DungeonOfTheWickedEventSourcing.Web.csproj", "{2E26D7C8-719E-4D3F-B71F-44659CF8238E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DungeonOfTheWickedEventSourcing.Web", "DungeonOfTheWickedEventSourcing.Web\DungeonOfTheWickedEventSourcing.Web.csproj", "{2E26D7C8-719E-4D3F-B71F-44659CF8238E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{55B7DFEE-BF03-4D4A-BF88-454CB3B9764D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "otel", "otel", "{DAE9DD07-5685-49F9-A921-107C5C8E9923}"
+	ProjectSection(SolutionItems) = preProject
+		config\otel\otel-collector-config.yaml = config\otel\otel-collector-config.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "grafana", "grafana", "{E034808A-EAA4-4DB5-AFAC-ACC838D34BB4}"
+	ProjectSection(SolutionItems) = preProject
+		config\grafana\grafana-datasources.yaml = config\grafana\grafana-datasources.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prometheus", "prometheus", "{0321A4DD-8BEA-4423-8D60-F720F748D1DA}"
+	ProjectSection(SolutionItems) = preProject
+		config\prometheus\prometheus.yml = config\prometheus\prometheus.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tempo", "tempo", "{2D48C5BD-29E5-4233-A480-0245C4096E19}"
+	ProjectSection(SolutionItems) = preProject
+		config\tempo\tempo.yaml = config\tempo\tempo.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +63,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{55B7DFEE-BF03-4D4A-BF88-454CB3B9764D} = {C67D3183-E14B-465C-ADC6-140CFF668EBC}
+		{DAE9DD07-5685-49F9-A921-107C5C8E9923} = {55B7DFEE-BF03-4D4A-BF88-454CB3B9764D}
+		{E034808A-EAA4-4DB5-AFAC-ACC838D34BB4} = {55B7DFEE-BF03-4D4A-BF88-454CB3B9764D}
+		{0321A4DD-8BEA-4423-8D60-F720F748D1DA} = {55B7DFEE-BF03-4D4A-BF88-454CB3B9764D}
+		{2D48C5BD-29E5-4233-A480-0245C4096E19} = {55B7DFEE-BF03-4D4A-BF88-454CB3B9764D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1A37F5C5-5D7A-43E9-89DF-DB4B1C252EF9}

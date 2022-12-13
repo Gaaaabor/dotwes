@@ -1,4 +1,5 @@
 ﻿using DungeonOfTheWickedEventSourcing.Api.Application.Connection;
+using DungeonOfTheWickedEventSourcing.Api.Application.Diagnostic;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian;
 using DungeonOfTheWickedEventSourcing.Common.Akka;
 
@@ -18,6 +19,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
             var clientConnectionPort = configuration.GetValue(AkkaConfiguration.ClientConnectionPort, 0);
 
             CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, clientConnectionPort);
+            CreateChildActor<MetricsActor>(name: MetricsActor.ActorName);
         }
     }
 }
