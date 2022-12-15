@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "otel", "otel", "{DAE9DD07-5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "grafana", "grafana", "{E034808A-EAA4-4DB5-AFAC-ACC838D34BB4}"
 	ProjectSection(SolutionItems) = preProject
+		config\grafana\grafana-bootstrap.ini = config\grafana\grafana-bootstrap.ini
 		config\grafana\grafana-datasources.yaml = config\grafana\grafana-datasources.yaml
 	EndProjectSection
 EndProject

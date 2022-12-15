@@ -1,11 +1,20 @@
 apiVersion: 1
 
 datasources:
+  - name: Node Graph API
+    type: hamedkarbasi93-nodegraphapi-datasource
+    access: proxy
+    orgId: 1
+    url: http://dotwes-api
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: true
   - name: Prometheus
     type: prometheus
     access: proxy
     orgId: 1
-    url: http://dotwes-prometheus:9090
+    url: http://prometheus:9090
     basicAuth: false
     isDefault: false
     version: 1
@@ -14,7 +23,7 @@ datasources:
     type: tempo
     access: proxy
     orgId: 1
-    url: http://dotwes-tempo:3200
+    url: http://tempo:3200
     basicAuth: false
     isDefault: false
     version: 1
@@ -25,7 +34,7 @@ datasources:
     type: loki
     access: proxy
     orgId: 1
-    url: http://dotwes-loki:3100
+    url: http://loki:3100
     basicAuth: false
     isDefault: true
     version: 1

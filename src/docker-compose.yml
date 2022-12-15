@@ -13,6 +13,15 @@ services:
   dotwes-otel-collector:
     #image: otel/opentelemetry-collector
     image: otel/opentelemetry-collector-contrib:0.42.0
+    container_name: collector
+    hostname: collector
+    ports:
+      - "8889:8889"
+    depends_on:
+      dotwes-tempo:
+        condition: service_healthy
+      dotwes-prometheus:
+        condition: service_healthy
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./config/otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml    
@@ -22,31 +31,53 @@ services:
   dotwes-prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - dotwes-bridge
+    healthcheck:
+      interval: 5s
+      retries: 10
+      test: wget --no-verbose --tries=1 --spider http://localhost:9090/status || exit 1
 
   dotwes-tempo:
     image: grafana/tempo:latest
-    command: [ "-config.file=/etc/tempo.yaml" ]
+    container_name: tempo
+    hostname: tempo
+    command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
+    ports:
+      - "3200:3200"
+      - "4317:4317"
     volumes:
       - ./config/tempo/tempo.yaml:/etc/tempo.yaml
     networks:
       - dotwes-bridge
+    healthcheck:
+      interval: 5s
+      retries: 10
+      test: wget --no-verbose --tries=1 --spider http://localhost:3200/status || exit 1
 
   dotwes-loki:
     image: grafana/loki:latest
+    container_name: loki
+    hostname: loki
     command: [ "-config.file=/etc/loki/local-config.yaml" ]
     networks:
       - dotwes-bridge
 
   dotwes-grafana:
     image: grafana/grafana:8.3.3
+    container_name: grafana
+    hostname: grafana
     ports:
       - "3000:3000"
     volumes:
+      - ./config/grafana/grafana-bootstrap.ini:/etc/grafana/grafana.ini
       - ./config/grafana/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./config/grafana/datasources:/var/lib/grafana/plugins
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

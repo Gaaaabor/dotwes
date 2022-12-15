@@ -1,0 +1,38 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "community",
+  "signedByOrg": "hamedkarbasi93",
+  "signedByOrgName": "hamedkarbasi93",
+  "plugin": "hamedkarbasi93-nodegraphapi-datasource",
+  "version": "1.0.1",
+  "time": 1656877884981,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "module.js.LICENSE.txt": "0d8f66cd4afb566cb5b7e1540c68f43b939d3eba12ace290f18abc4f4cb53ed0",
+    "img/graph-example.png": "8ef62dad9ab423ae37a2a660d35d076c154ac6001d50825f94a24e225f2adec3",
+    "img/logo.svg": "8edf52649f6dbbc53e3388d4b1caa1f96f6965cfea6ac96ec78ad176dabc9810",
+    "img/add-datasource.png": "5e3f8163a47f54ba5ce8703b0b7c96d95eeb1b60bd9084a941bd825e0e1c3988",
+    "img/query-string.png": "f91460b8d8a0912830f15b045c964e98b2592d0196dbd6747a88133765aa9b00",
+    "CHANGELOG.md": "aaa78be4710ef41d56ddab1edbd180ef9f9adfea2f293109aae925dc33a1b9b3",
+    "LICENSE": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+    "plugin.json": "de9b297fee68207f448a9c3a168c1d23f19314a2b7a7fe70d4d30caa971dcec2",
+    "module.js.map": "8cf0207a02f10d70f76cf651cd4a9785e923d8e06c31959bedc4135bcaeb42a6",
+    "README.md": "ed8b5ab2f93a53f96196d909dc65d46031391790c85a0bba5aa8f154117f7bb0",
+    "module.js": "4a8a0f4115510dabf1c6f84daafde33eb8a81705b5562c8f94a28b1cf4de3dc0"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.10
+Comment: https://openpgpjs.org
+
+wrkEARMKAAYFAmLB8z0AIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm50nNAgkB4Ilkrv7GwNK97uDTyTXzFzCr7Vu7gdszClu1TWgRzW21W0f1
+RxPQp4c5OfOsN2mdLUypjsf7Zb9+YQRbjQShYVQCCQHCg8JqEyIfR90r5rQV
+1GIGk0p8JXcMTusXDXmKuAcf88geZMybHte0CweG3VzhtbCL7v4nFCaj/oHj
+Pdiv+hNTOQ==
+=AXaq
+-----END PGP SIGNATURE-----

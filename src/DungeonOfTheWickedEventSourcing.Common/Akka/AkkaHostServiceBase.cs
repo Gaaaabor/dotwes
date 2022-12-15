@@ -20,6 +20,8 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         protected ActorSystem ActorSystem { get; private set; }
         protected IActorRef Mediator { get; private set; }
 
+        protected IActorRef ActorWalker { get; private set; }
+
         public AkkaHostServiceBase(IServiceProvider serviceProvider, ILogger logger)
         {
             ServiceProvider = serviceProvider;
@@ -32,7 +34,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
 
             ActorSystem = CreateActorSystem();
             _dependencyResolver = DependencyResolver.For(ActorSystem);
-            CreateChildActor<ActorWalkerActor>(ActorWalkerActor.ActorName);
+            ActorWalker = CreateChildActor<ActorWalkerActor>(ActorWalkerActor.ActorName);
 
             Mediator = ActorSystem.GetMediator(_logger);
 
@@ -58,7 +60,10 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
             var port = configuration.GetValue(AkkaConfiguration.Port, 0);
 
             var config = AkkaConfiguration.GetRedisPersistenceConfiguration(connectionString)
-                .WithFallback(AkkaConfiguration.GetClusterConfiguration(ActorSystemName, port, roles, seedNodeHostNames));
+                .WithFallback(AkkaConfiguration.GetClusterConfiguration(ActorSystemName, port, roles, seedNodeHostNames))
+                .WithFallback(@"tracedmailbox {
+mailbox-type : ""DungeonOfTheWickedEventSourcing.Common.Akka.TracedMailbox, DungeonOfTheWickedEventSourcing.Common""
+}");
 
             var bootstrapSetup = BootstrapSetup
                 .Create()
@@ -66,7 +71,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
 
             var dependencyResolverSetup = DependencyResolverSetup.Create(ServiceProvider);
             var actorSystemSetup = bootstrapSetup.And(dependencyResolverSetup);
-            var actorSystem = ActorSystem.Create(ActorSystemName, actorSystemSetup);            
+            var actorSystem = ActorSystem.Create(ActorSystemName, actorSystemSetup);
 
             return actorSystem;
         }
@@ -80,7 +85,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         /// <returns></returns>
         protected virtual IActorRef CreateChildActor<TActor>(string name, params object[] args) where TActor : ActorBase
         {
-            var props = _dependencyResolver.Props<TActor>(args);
+            var props = _dependencyResolver.Props<TActor>(args).WithMailbox("tracedmailbox");
             return ActorSystem.ActorOf(props, name);
         }
     }

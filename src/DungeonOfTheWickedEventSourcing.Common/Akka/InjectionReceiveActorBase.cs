@@ -60,7 +60,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
 
         protected IActorRef CreateChildActor<TChild>(string name, params object[] args) where TChild : ActorBase
         {
-            var props = _dependencyResolver.Props<TChild>(args);
+            var props = _dependencyResolver.Props<TChild>(args).WithMailbox("tracedmailbox");
             return Context.ActorOf(props, name);
         }
 

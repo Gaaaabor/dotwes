@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "routes": [
+    {
+      "path": "nodegraphds",
+      "url": "{{ .JsonData.url }}"
+    }
+  ],
+  "type": "datasource",
+  "name": "Node Graph API",
+  "id": "hamedkarbasi93-nodegraphapi-datasource",
+  "metrics": true,
+  "info": {
+    "description": "A datasource that provides data for nodegraph panel via api",
+    "author": {
+      "name": "Hamed Karbasi",
+      "url": "https://grafana.com/orgs/hamedkarbasi93"
+    },
+    "keywords": [
+      "nodegraph",
+      "datasource",
+      "api"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/hoptical/nodegraph-api-plugin"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/hoptical/nodegraph-api-plugin/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Graph Example",
+        "path": "img/graph-example.png"
+      },
+      {
+        "name": "Add Datasource",
+        "path": "img/add-datasource.png"
+      },
+      {
+        "name": "Query String",
+        "path": "img/query-string.png"
+      }
+    ],
+    "version": "1.0.1",
+    "updated": "2022-07-03"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=7.5.0",
+    "plugins": []
+  }
+}

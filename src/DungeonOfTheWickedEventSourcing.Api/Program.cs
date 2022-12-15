@@ -1,14 +1,10 @@
 using DungeonOfTheWickedEventSourcing.Api;
+using DungeonOfTheWickedEventSourcing.Api.Application;
+using DungeonOfTheWickedEventSourcing.Common.Akka.Configuration;
 using Microsoft.AspNetCore.ResponseCompression;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 public class Program
 {
-    public const string ApplicationName = "dotwes";    
-
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -17,41 +13,15 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        builder.Services.AddHostedService<AkkaHost>();
+        builder.Services.AddSingleton<IGraphDataProvider, AkkaHost>();
+        builder.Services.AddHostedService(x => (AkkaHost)x.GetRequiredService<IGraphDataProvider>());
         builder.Services.AddResponseCompression(opts =>
         {
             opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
         });
 
-        builder.Services.AddOpenTelemetryTracing(configure => configure
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ApplicationName))
-            .AddAspNetCoreInstrumentation()            
-            .AddConsoleExporter()
-            .AddOtlpExporter(options =>
-            {
-                options.Endpoint = new Uri("http://dotwes-otel-collector:4317");
-            }));
-
-        builder.Services.AddOpenTelemetryMetrics(configure => configure
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ApplicationName))
-            .AddMeter("Meter")
-            .AddConsoleExporter()                        
-            .AddOtlpExporter(options =>
-            {
-                options.Endpoint = new Uri("http://dotwes-otel-collector:4317");
-            }));
-
-        builder.Logging.AddOpenTelemetry(configure =>
-        {
-            configure.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ApplicationName));
-            configure.IncludeFormattedMessage = true;
-            configure.IncludeScopes = true;
-            configure.ParseStateValues = true;
-            configure.AddOtlpExporter(options =>
-            {
-                options.Endpoint = new Uri("http://dotwes-otel-collector:4317");
-            });
-        });
+        builder.Services.ConfigureOpenTelemetryDiagnostics();
+        builder.Logging.ConfigureOpenTelemetryDiagnostics();
 
         var app = builder.Build();
 
@@ -65,6 +35,25 @@ public class Program
         app.UseAuthorization();
         app.MapControllers();
         app.UseWebSockets();
+
+        app.MapGet("/api/graph/fields", async x =>
+        {
+            var akkaHost = app.Services.GetRequiredService<IGraphDataProvider>();
+            var graphFields = akkaHost.GetGraphFields();
+            await x.Response.WriteAsync(graphFields);
+        });
+
+        app.MapGet("/api/graph/data", async x =>
+        {
+            var akkaHost = app.Services.GetRequiredService<IGraphDataProvider>();
+            var graphData = await akkaHost.GetGraphData();
+            await x.Response.WriteAsync(graphData);
+        });
+
+        app.MapGet("/api/health", async x =>
+        {
+            await x.Response.WriteAsJsonAsync(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+        });
 
         app.UseResponseCompression();
 

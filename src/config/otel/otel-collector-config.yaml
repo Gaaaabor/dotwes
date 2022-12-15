@@ -8,16 +8,16 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
   otlp:
-    endpoint: 0.0.0.0:4317
+    endpoint: tempo:4317
     tls:
       insecure: true
   loki:
-    endpoint: http://dotwes-loki:3100/loki/api/v1/push
+    endpoint: http://loki:3100/loki/api/v1/push
     format: json
     labels:
       resource:
         service.name: "dotwes"
-        service.instance.id: "dotwes_${HOSTNAME}"
+        service.instance.id: "${HOSTNAME}"
 
 service:
   pipelines:
