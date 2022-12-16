@@ -1,9 +1,9 @@
 ﻿using Akka.Actor;
 using Akka.Event;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Events;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Events;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker
+namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
 {
     public class ActorWalkerActor : InjectionReceiveActorBase<ActorWalkerActor>
     {

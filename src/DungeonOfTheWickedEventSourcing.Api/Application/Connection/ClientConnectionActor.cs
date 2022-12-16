@@ -3,8 +3,8 @@ using Akka.IO;
 using Akka.IO.TcpTools;
 using Akka.IO.TcpTools.Actor;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka.Events;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
+using DungeonOfTheWickedEventSourcing.Common.Events;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
 {

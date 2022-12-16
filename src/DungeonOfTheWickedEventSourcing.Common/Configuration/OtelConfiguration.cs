@@ -5,7 +5,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka.Configuration
+namespace DungeonOfTheWickedEventSourcing.Common.Configuration
 {
     public static class OtelConfiguration
     {
@@ -18,7 +18,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka.Configuration
             services.AddOpenTelemetryTracing(configure => configure
                 .SetResourceBuilder(_resourceBuilder)
                 .AddAspNetCoreInstrumentation()
-                .AddSource(ApplicationName)                
+                .AddSource(ApplicationName)
                 .AddConsoleExporter()
                 .AddOtlpExporter(options =>
                 {
@@ -27,7 +27,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka.Configuration
 
             services.AddOpenTelemetryMetrics(configure => configure
                 .SetResourceBuilder(_resourceBuilder)
-                .AddMeter("Meter")                
+                .AddMeter("Meter")
                 .AddConsoleExporter()
                 .AddOtlpExporter(options =>
                 {

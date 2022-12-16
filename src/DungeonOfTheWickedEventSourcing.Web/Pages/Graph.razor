@@ -1,0 +1,51 @@
+﻿@page "/graph"
+
+@using Microsoft.AspNetCore.SignalR.Client;
+@using System.Text.Json;
+
+<h3>Graph</h3>
+
+@_message
+<br />
+<button @onclick=Send>Send</button>
+
+
+@code {
+
+    private HubConnection _hubConnection;
+    private string _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _message = "Yay";        
+
+        _hubConnection ??= new HubConnectionBuilder()
+            .WithUrl(new Uri("http://localhost:5555/MainHub"), options =>
+            {
+                options.SkipNegotiation = true;
+                options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+            })
+            .AddJsonProtocol(x =>
+             {
+                 x.PayloadSerializerOptions = new JsonSerializerOptions
+                 {
+                     NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                 };
+             })
+            .Build();
+
+        _hubConnection.On<string>($"OnMessage", (message) =>
+        {
+            _message = message;
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    private void Send()
+    {
+        _hubConnection.InvokeAsync("Test", "From frontend!");
+    }
+}

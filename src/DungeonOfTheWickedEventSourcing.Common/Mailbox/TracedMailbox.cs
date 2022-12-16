@@ -3,7 +3,7 @@ using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Dispatch.MessageQueues;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka
+namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
 {
     public class TracedMailbox : MailboxType, IProducesMessageQueue<TracedMessageQueue>
     {
@@ -16,6 +16,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         { }
 
         public TracedMailbox(Settings settings, Config config) : base(settings, config)
-        {}
+        { }
     }
 }

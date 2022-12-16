@@ -23,6 +23,7 @@ services:
     scale: 1
     ports:
       - "80:80"
+      - "5555:80"
       - "443:443"
       - "5014:5014"
     volumes:
@@ -36,11 +37,11 @@ services:
   #    - ASPNETCORE_ENVIRONMENT=Development
   #    #- ASPNETCORE_URLS=https://+:443;http://+:80
   #    #- ASPNETCORE_URLS=http://+:80
-  #    - ServerUrl=ws://dotwes-api:5014
+  #    #- ServerUrl=ws://dotwes-api:5014
   #  scale: 1
   #  ports:
-  #    - "80:80"
-  #    #- "443:443"
+  #    - "81:80"
+  #    - "4433:443"
   #  volumes:
   #    - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
   #    - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro

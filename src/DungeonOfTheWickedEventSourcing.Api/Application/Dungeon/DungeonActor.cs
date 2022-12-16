@@ -6,7 +6,7 @@ using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Events;
 using DungeonOfTheWickedEventSourcing.Api.Application.Enemy;
 using DungeonOfTheWickedEventSourcing.Api.Application.Loot;
-using DungeonOfTheWickedEventSourcing.Common.Akka;
+using DungeonOfTheWickedEventSourcing.Common;
 using System.Drawing;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon

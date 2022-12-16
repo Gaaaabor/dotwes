@@ -1,9 +1,9 @@
-﻿namespace DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Models
+﻿namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models
 {
     public class ActorHierarchyNode
     {
         private readonly List<ActorHierarchyNode> _children = new List<ActorHierarchyNode>();
-        
+
         public string Name { get; set; }
         public IEnumerable<ActorHierarchyNode> Children => _children.ToArray();
 

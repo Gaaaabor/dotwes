@@ -1,4 +1,4 @@
-﻿using DungeonOfTheWickedEventSourcing.Common.Akka.Events;
+﻿using DungeonOfTheWickedEventSourcing.Common.Events;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Events
 {

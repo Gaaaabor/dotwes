@@ -1,13 +1,14 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker;
-using DungeonOfTheWickedEventSourcing.Common.Akka.Extensions;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker;
+using DungeonOfTheWickedEventSourcing.Common.Configuration;
+using DungeonOfTheWickedEventSourcing.Common.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka
+namespace DungeonOfTheWickedEventSourcing.Common
 {
     public abstract class AkkaHostServiceBase : IHostedService
     {
@@ -58,11 +59,11 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
             var roles = configuration.GetValue<string>(AkkaConfiguration.Roles)?.Split(Separator);
             var seedNodeHostNames = configuration.GetValue<string>(AkkaConfiguration.SeedNodeHostNames)?.Split(Separator);
             var port = configuration.GetValue(AkkaConfiguration.Port, 0);
-
+            
             var config = AkkaConfiguration.GetRedisPersistenceConfiguration(connectionString)
                 .WithFallback(AkkaConfiguration.GetClusterConfiguration(ActorSystemName, port, roles, seedNodeHostNames))
                 .WithFallback(@"tracedmailbox {
-mailbox-type : ""DungeonOfTheWickedEventSourcing.Common.Akka.TracedMailbox, DungeonOfTheWickedEventSourcing.Common""
+mailbox-type : ""DungeonOfTheWickedEventSourcing.Common.Mailbox.TracedMailbox, DungeonOfTheWickedEventSourcing.Common""
 }");
 
             var bootstrapSetup = BootstrapSetup

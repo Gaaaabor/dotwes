@@ -1,12 +1,13 @@
 ﻿using Akka.Actor;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.DependencyInjection;
-using DungeonOfTheWickedEventSourcing.Common.Akka.Extensions;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
+using DungeonOfTheWickedEventSourcing.Common.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.Metrics;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka
+namespace DungeonOfTheWickedEventSourcing.Common
 {
     public abstract class InjectionReceiveActorBase<TActor> : ReceiveActor where TActor : ReceiveActor
     {
@@ -44,12 +45,19 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
 
         protected override void PreStart()
         {
-            Logger.LogInformation("{ActorName} started", Self.Path.Name);            
+            Context.System.EventStream.Publish(new ActorStartedEvent
+            {
+                Id = Self.Path.Uid,
+                Name = Self.Path.Name
+            });
+
+            Logger.LogInformation("{ActorName} started", Self.Path.Name);
         }
 
         protected override void PostStop()
         {
             Logger.LogInformation("{ActorName} stopped", Self.Path.Name);
+            Context.System.EventStream.Publish(new ActorStoppedEvent { Id = Self.Path.Uid });
             _serviceScope?.Dispose();
         }
 

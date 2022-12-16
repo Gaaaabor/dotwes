@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Models;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker
+namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
 {
     internal class ActorVisitor
     {

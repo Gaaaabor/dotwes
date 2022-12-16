@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.IO;
-using DungeonOfTheWickedEventSourcing.Common.Akka;
+using DungeonOfTheWickedEventSourcing.Common;
 using System.Net;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection

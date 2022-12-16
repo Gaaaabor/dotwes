@@ -2,7 +2,7 @@
 using Akka.Event;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka;
+using DungeonOfTheWickedEventSourcing.Common;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian
 {

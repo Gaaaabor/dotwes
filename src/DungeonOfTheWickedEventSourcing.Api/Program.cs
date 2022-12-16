@@ -1,6 +1,7 @@
 using DungeonOfTheWickedEventSourcing.Api;
 using DungeonOfTheWickedEventSourcing.Api.Application;
-using DungeonOfTheWickedEventSourcing.Common.Akka.Configuration;
+using DungeonOfTheWickedEventSourcing.Api.Hubs;
+using DungeonOfTheWickedEventSourcing.Common.Configuration;
 using Microsoft.AspNetCore.ResponseCompression;
 
 public class Program
@@ -12,9 +13,11 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-
-        builder.Services.AddSingleton<IGraphDataProvider, AkkaHost>();
-        builder.Services.AddHostedService(x => (AkkaHost)x.GetRequiredService<IGraphDataProvider>());
+        builder.Services.AddSignalR();
+        builder.Services.AddSingleton<AkkaHost>();
+        builder.Services.AddSingleton<ISignalRProcessor>(x => x.GetRequiredService<AkkaHost>());
+        builder.Services.AddSingleton<IGraphDataProvider>(x => x.GetRequiredService<AkkaHost>());
+        builder.Services.AddHostedService(x => x.GetRequiredService<AkkaHost>());
         builder.Services.AddResponseCompression(opts =>
         {
             opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
@@ -35,6 +38,7 @@ public class Program
         app.UseAuthorization();
         app.MapControllers();
         app.UseWebSockets();
+        app.MapHub<MainHub>(MainHub.Path);
 
         app.MapGet("/api/graph/fields", async x =>
         {

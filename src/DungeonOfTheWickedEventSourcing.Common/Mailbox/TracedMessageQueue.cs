@@ -2,10 +2,11 @@
 using Akka.Dispatch;
 using Akka.Dispatch.MessageQueues;
 using Akka.Event;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka
+namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
 {
     public class TracedMessageQueue : IMessageQueue, IUnboundedMessageQueueSemantics, IUnboundedDequeBasedMessageQueueSemantics
     {
@@ -33,21 +34,16 @@ namespace DungeonOfTheWickedEventSourcing.Common.Akka
         {
             _queue.Enqueue(envelope);
 
-            // TODO: Implement
-            //var uid = (_owner?.Path.Uid ?? receiver?.Path.Uid) ?? 0;
+            if (envelope.Message is ActorReceivedMessageEvent)
+            {
+                return;
+            }
 
-            //_eventStream.Publish(new ActorGotMessage
-            //{
-            //    Nodes = new List<Node>
-            //    {
-            //        new Node { Id = uid.ToString(), Title = _owner?.Path.Name },
-            //        new Node { Id = envelope.Sender.Path.Uid.ToString(), Title = envelope.Sender.Path.Name }
-            //    },
-            //    Edges = new List<Edge>
-            //    {
-            //        new Edge { Id = Guid.NewGuid().ToString(), Source = envelope.Sender.Path.Uid.ToString(), Target = uid.ToString() }
-            //    }
-            //});
+            _eventStream.Publish(new ActorReceivedMessageEvent
+            {
+                Id = _owner.Path.Uid,
+                SenderId = envelope.Sender.Path.Uid
+            });
         }
 
         /// <inheritdoc cref="IMessageQueue"/>

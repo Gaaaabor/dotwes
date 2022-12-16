@@ -2,7 +2,7 @@
 using System.Net;
 using System.Text;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka
+namespace DungeonOfTheWickedEventSourcing.Common.Configuration
 {
     public static class AkkaConfiguration
     {

@@ -2,17 +2,21 @@
 using DungeonOfTheWickedEventSourcing.Api.Application;
 using DungeonOfTheWickedEventSourcing.Api.Application.Connection;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian;
-using DungeonOfTheWickedEventSourcing.Common.Akka;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Events;
-using DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Models;
+using DungeonOfTheWickedEventSourcing.Api.Application.SignalR;
+using DungeonOfTheWickedEventSourcing.Common;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Events;
+using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models;
+using DungeonOfTheWickedEventSourcing.Common.Configuration;
 using System.Text.Json;
-using static DungeonOfTheWickedEventSourcing.Common.Akka.TracedMessageQueue;
+using static DungeonOfTheWickedEventSourcing.Common.Mailbox.TracedMessageQueue;
 
 namespace DungeonOfTheWickedEventSourcing.Api
 {
-    public class AkkaHost : AkkaHostServiceBase, IGraphDataProvider
+    public class AkkaHost : AkkaHostServiceBase, IGraphDataProvider, ISignalRProcessor
     {
+        private IActorRef _signalRActor;
+
         public AkkaHost(IServiceProvider serviceProvider, ILogger<AkkaHost> logger) : base(serviceProvider, logger)
         { }
 
@@ -25,6 +29,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
             var clientConnectionPort = configuration.GetValue(AkkaConfiguration.ClientConnectionPort, 0);
 
             CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, clientConnectionPort);
+            _signalRActor = CreateChildActor<SignalRActor>(name: SignalRActor.ActorName);
         }
 
         public string GetGraphFields()
@@ -116,6 +121,11 @@ namespace DungeonOfTheWickedEventSourcing.Api
 
             return JsonSerializer.Serialize(new { edges, nodes });
 
+        }
+
+        public void Process(string message)
+        {
+            _signalRActor.Tell(message);
         }
     }
 }

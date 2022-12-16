@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Akka.ActorWalker.Models
+namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models
 {
     public class RootNode : ActorHierarchyNode
     {

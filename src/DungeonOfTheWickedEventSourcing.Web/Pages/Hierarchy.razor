@@ -112,6 +112,9 @@
     public void Dispose()
     {
         _cancellationTokenSource.Cancel();
-        _ = _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Bye", CancellationToken.None);
+        if (_clientWebSocket.State == WebSocketState.Open)
+        {
+            _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Bye", CancellationToken.None);
+        }
     }
 }

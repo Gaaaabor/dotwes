@@ -1,6 +1,6 @@
 ﻿using Akka.Event;
 using DungeonOfTheWickedEventSourcing.Api.Application.Loot.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Akka;
+using DungeonOfTheWickedEventSourcing.Common;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Loot
 {

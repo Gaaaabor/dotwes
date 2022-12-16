@@ -21,8 +21,4 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.9" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Akka\Tools\" />
-  </ItemGroup>
-
 </Project>
