@@ -1,7 +1,8 @@
 using DungeonOfTheWickedEventSourcing.Api;
 using DungeonOfTheWickedEventSourcing.Api.Application;
-using DungeonOfTheWickedEventSourcing.Api.Hubs;
+using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
 using DungeonOfTheWickedEventSourcing.Common.Configuration;
+using DungeonOfTheWickedEventSourcing.Common.Hubs;
 using Microsoft.AspNetCore.ResponseCompression;
 
 public class Program

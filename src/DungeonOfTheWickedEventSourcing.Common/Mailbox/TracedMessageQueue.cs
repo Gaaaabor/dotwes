@@ -32,24 +32,27 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
         /// <inheritdoc cref="IMessageQueue"/>
         public void Enqueue(IActorRef receiver, Envelope envelope)
         {
-            _queue.Enqueue(envelope);
-
-            if (envelope.Message is ActorReceivedMessageEvent)
+            if (envelope.Message is ActorReceivedMessageEvent actorReceivedMessageEvent && actorReceivedMessageEvent.SenderId == _owner.Path.Uid)
             {
                 return;
             }
 
-            _eventStream.Publish(new ActorReceivedMessageEvent
-            {
-                Id = _owner.Path.Uid,
-                SenderId = envelope.Sender.Path.Uid
-            });
+            _queue.Enqueue(envelope);
         }
 
         /// <inheritdoc cref="IMessageQueue"/>
         public bool TryDequeue(out Envelope envelope)
         {
             var result = TryDequeueInternal(out envelope);
+            if (result)
+            {
+                _eventStream.Publish(new ActorReceivedMessageEvent
+                {
+                    Id = _owner.Path.Uid,
+                    SenderId = envelope.Sender.Path.Uid
+                });
+            }
+
             return result;
         }
 

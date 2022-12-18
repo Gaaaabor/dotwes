@@ -1,7 +1,7 @@
-﻿using DungeonOfTheWickedEventSourcing.Api.Application;
+﻿using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
 using Microsoft.AspNetCore.SignalR;
 
-namespace DungeonOfTheWickedEventSourcing.Api.Hubs
+namespace DungeonOfTheWickedEventSourcing.Common.Hubs
 {
     public class MainHub : Hub
     {
@@ -13,7 +13,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Hubs
             _signalRProcessor = signalRProcessor;
         }
 
-        public void Test(string message)
+        public void OnClientMessage(string message)
         {
             _signalRProcessor.Process(message);
         }

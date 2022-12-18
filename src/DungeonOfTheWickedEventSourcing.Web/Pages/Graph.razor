@@ -1,23 +1,56 @@
 ﻿@page "/graph"
 
+@using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
+@using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Commands;
+@using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR.Events;
 @using Microsoft.AspNetCore.SignalR.Client;
 @using System.Text.Json;
 
 <h3>Graph</h3>
-
 @_message
 <br />
 <button @onclick=Send>Send</button>
 
+<style>
+    .circle {
+        border-radius: 50%;
+        background-color: transparent;
+        background-clip: content-box;
+        border: 1px solid #00247D;
+    }
+</style>
+
+<div style="position:absolute;left:800px;top:500px">
+
+    @for (int i = 0; i < 5; i++)
+    {
+        var x = i * 300;
+        var iW = $"{x}px";
+        var iC = $"{150-((x/100)*50)}px";
+        <div id="@(i+1)" class="circle" style="width:@iW;height:@iW;position:absolute;top:@iC;left:@iC"></div>
+    }
+
+    @if (_actorNodes.Any())
+    {
+        // TODO: Draw nodes on the circles
+
+        @if (_actorEdges.Any())
+        {
+            // TODO: Connect the nodes
+        }
+    }
+</div>
 
 @code {
 
+    private readonly Dictionary<long, string> _actorNodes = new();
+    private readonly Dictionary<long, List<long>> _actorEdges = new();
     private HubConnection _hubConnection;
     private string _message;
 
     protected override async Task OnInitializedAsync()
     {
-        _message = "Yay";        
+        _message = "Yay";
 
         _hubConnection ??= new HubConnectionBuilder()
             .WithUrl(new Uri("http://localhost:5555/MainHub"), options =>
@@ -27,17 +60,54 @@
             })
             .AddJsonProtocol(x =>
              {
-                 x.PayloadSerializerOptions = new JsonSerializerOptions
-                 {
-                     NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
-                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                 };
+                 x.PayloadSerializerOptions = new JsonSerializerOptions { NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
              })
             .Build();
 
-        _hubConnection.On<string>($"OnMessage", (message) =>
+        _hubConnection.On<ActorsRequestedCommandResponse>($"OnRefresh", (actorsRequestedCommandResponse) =>
         {
-            _message = message;
+            _message = $"Received OnActorsUpdatedEvent";
+
+            foreach (var actor in actorsRequestedCommandResponse.Actors)
+            {
+                if (!_actorNodes.ContainsKey(actor.Key))
+                {
+                    _actorNodes.Add(actor.Key, actor.Value);
+                }
+            }
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<ActorsUpdatedEvent>($"OnActorsUpdatedEvent", (actorsUpdatedEvent) =>
+        {
+            _message = $"Received OnActorsUpdatedEvent";
+
+            if (!_actorNodes.ContainsKey(actorsUpdatedEvent.Added))
+            {
+                _actorNodes.Add(actorsUpdatedEvent.Added, actorsUpdatedEvent.Name);
+            }
+
+            _actorNodes.Remove(actorsUpdatedEvent.Removed);
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<EdgesUpdatedEvent>($"OnEdgesUpdatedEvent", (edgesUpdatedEvent) =>
+        {
+            _message = $"Received OnEdgesUpdatedEvent";
+
+            if (!_actorEdges.TryGetValue(edgesUpdatedEvent.ReceiverId, out var edges))
+            {
+                edges = new List<long>();
+                _actorEdges.Add(edgesUpdatedEvent.ReceiverId, edges);
+            }
+
+            if (!edges.Contains(edgesUpdatedEvent.SenderId))
+            {
+                edges.Add(edgesUpdatedEvent.SenderId);
+            }
+
             InvokeAsync(StateHasChanged);
         });
 
@@ -46,6 +116,6 @@
 
     private void Send()
     {
-        _hubConnection.InvokeAsync("Test", "From frontend!");
+        _hubConnection.InvokeAsync("OnClientMessage", "Refresh");
     }
 }

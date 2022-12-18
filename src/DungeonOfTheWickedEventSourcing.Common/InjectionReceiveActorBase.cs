@@ -48,6 +48,7 @@ namespace DungeonOfTheWickedEventSourcing.Common
             Context.System.EventStream.Publish(new ActorStartedEvent
             {
                 Id = Self.Path.Uid,
+                Depth = Self.Path.Depth,
                 Name = Self.Path.Name
             });
 

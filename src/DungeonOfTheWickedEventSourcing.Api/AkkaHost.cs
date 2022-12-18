@@ -2,11 +2,12 @@
 using DungeonOfTheWickedEventSourcing.Api.Application;
 using DungeonOfTheWickedEventSourcing.Api.Application.Connection;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian;
-using DungeonOfTheWickedEventSourcing.Api.Application.SignalR;
 using DungeonOfTheWickedEventSourcing.Common;
 using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Events;
 using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
+using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
 using DungeonOfTheWickedEventSourcing.Common.Configuration;
 using System.Text.Json;
 using static DungeonOfTheWickedEventSourcing.Common.Mailbox.TracedMessageQueue;
@@ -29,6 +30,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
             var clientConnectionPort = configuration.GetValue(AkkaConfiguration.ClientConnectionPort, 0);
 
             CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, clientConnectionPort);
+            CreateChildActor<ActorDiagnosticsActor>(name: ActorDiagnosticsActor.ActorName);
             _signalRActor = CreateChildActor<SignalRActor>(name: SignalRActor.ActorName);
         }
 
@@ -94,6 +96,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
         {
             var result = await ActorWalker.Ask<HierarchyDiscoveredEvent>(new DiscoverHierarchyCommand());
 
+            var visitedNodes = new List<string>();
             var actorHierarchyNodes = new Queue<ActorHierarchyNode>(new[] { result.Root });
 
             var nodes = new List<Node>();
@@ -102,11 +105,24 @@ namespace DungeonOfTheWickedEventSourcing.Api
             while (actorHierarchyNodes.Count > 0)
             {
                 var actorHierarchyNode = actorHierarchyNodes.Dequeue();
-                nodes.Add(new Node { Id = actorHierarchyNode.Name, Title = actorHierarchyNode.Name });
+                if (!visitedNodes.Contains(actorHierarchyNode.Name))
+                {
+                    visitedNodes.Add(actorHierarchyNode.Name);
+                }
+
+                nodes.Add(new Node
+                {
+                    Id = actorHierarchyNode.Id.ToString(),
+                    Title = actorHierarchyNode.Name
+                });
 
                 foreach (var child in actorHierarchyNode.Children)
                 {
-                    nodes.Add(new Node { Id = child.Name, Title = child.Name });
+                    nodes.Add(new Node
+                    {
+                        Id = child.Id.ToString(),
+                        Title = child.Name
+                    });
 
                     edges.Add(new Edge
                     {
@@ -115,7 +131,11 @@ namespace DungeonOfTheWickedEventSourcing.Api
                         Target = child.Name
                     });
 
-                    actorHierarchyNodes.Enqueue(child);
+                    if (!visitedNodes.Contains(child.Name))
+                    {
+                        visitedNodes.Add(child.Name);
+                        actorHierarchyNodes.Enqueue(child);
+                    }
                 }
             }
 

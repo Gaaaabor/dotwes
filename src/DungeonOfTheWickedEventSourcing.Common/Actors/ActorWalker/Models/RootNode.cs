@@ -8,8 +8,9 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public RootNode(string name)
+        public RootNode(long id, string name)
         {
+            Id = id;
             Name = name;
             HostName = Dns.GetHostName();
         }

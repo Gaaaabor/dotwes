@@ -5,7 +5,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
 {
     internal class ActorVisitor
     {
-        private readonly RootNode _rootNode = new RootNode("ActorSystem");
+        private readonly RootNode _rootNode = new RootNode(0, "ActorSystem");
         private readonly bool _includeSystemNodes;
 
         public ActorVisitor(bool includeSystemNodes = false)
@@ -32,7 +32,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
 
             if (extendedActorSystem.Guardian.IsLocal)
             {
-                var guardianNode = new ActorHierarchyNode { Name = extendedActorSystem.Guardian.Path.Name };
+                var guardianNode = new ActorHierarchyNode
+                {
+                    Id = extendedActorSystem.Guardian.Path.Uid,
+                    Name = extendedActorSystem.Guardian.Path.Name
+                };
+
                 nodes.Add(guardianNode);
 
                 var guardianNodes = Visit(extendedActorSystem.Guardian as LocalActorRef);
@@ -41,7 +46,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
 
             if (extendedActorSystem.SystemGuardian.IsLocal && _includeSystemNodes)
             {
-                var systemGuardianNode = new ActorHierarchyNode { Name = extendedActorSystem.SystemGuardian.Path.Name };
+                var systemGuardianNode = new ActorHierarchyNode
+                {
+                    Id = extendedActorSystem.SystemGuardian.Path.Uid,
+                    Name = extendedActorSystem.SystemGuardian.Path.Name
+                };
+
                 nodes.Add(systemGuardianNode);
 
                 var systemGuardianNodes = Visit(extendedActorSystem.SystemGuardian as LocalActorRef);
@@ -62,7 +72,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
             var children = localActorRef.Children.ToList();
             foreach (var child in children)
             {
-                var childNode = new ActorHierarchyNode { Name = child.Path.Name };
+                var childNode = new ActorHierarchyNode
+                {
+                    Id = child.Path.Uid,
+                    Name = child.Path.Name
+                };
+
                 nodes.Add(childNode);
 
                 var childNodeChildren = Visit(child as RepointableActorRef);
@@ -83,7 +98,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker
             var children = repointableActorRef.Children.ToList();
             foreach (var child in children)
             {
-                var childNode = new ActorHierarchyNode { Name = child.Path.Name };
+                var childNode = new ActorHierarchyNode
+                {
+                    Id = child.Path.Uid,
+                    Name = child.Path.Name
+                };
+
                 nodes.Add(childNode);
 
                 if (child is RepointableActorRef childRepointableActorRef)
