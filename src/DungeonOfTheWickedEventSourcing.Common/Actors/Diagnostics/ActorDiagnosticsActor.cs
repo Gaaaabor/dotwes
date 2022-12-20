@@ -1,9 +1,9 @@
-﻿using Akka.Actor;
-using Akka.Event;
+﻿using Akka.Event;
 using Akka.Util.Internal;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
-using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR.Events;
+using DungeonOfTheWickedEventSourcing.Common.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
 {
@@ -13,19 +13,23 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
 
         private readonly Dictionary<long, ActorNode> _actorNodes = new();
         private readonly Dictionary<long, List<long>> _actorEdges = new();
+        private readonly IHubContext<MainHub> _hubContext;
 
-        public ActorDiagnosticsActor(IServiceProvider serviceProvider) : base(serviceProvider)
+        public ActorDiagnosticsActor(IServiceProvider serviceProvider, IHubContext<MainHub> hubContext) : base(serviceProvider)
         {
-            Context.System.EventStream.Subscribe<ActorDiagnosticEvent>(Self);
-            Context.System.EventStream.Subscribe<ActorsRequestedCommand>(Self);
+            _hubContext = hubContext;
 
-            Receive<ActorStartedEvent>(OnActorStartedEvent);
-            Receive<ActorStoppedEvent>(OnActorStoppedEvent);
-            Receive<ActorReceivedMessageEvent>(OnActorReceivedMessageEvent);
-            Receive<ActorsRequestedCommand>(OnActorsRequestedCommand);
+            Context.System.EventStream.Subscribe<ActorDiagnosticEvent>(Self);
+            Context.System.EventStream.Subscribe<QueryActorsCommand>(Self);
+
+            ReceiveAsync<ActorStartedEvent>(OnActorStartedEventAsync);
+            ReceiveAsync<ActorStoppedEvent>(OnActorStoppedEventAsync);
+            ReceiveAsync<ActorReceivedMessageEvent>(OnActorReceivedMessageEventAsync);
+
+            ReceiveAsync<QueryActorsCommand>(OnQueryActorsCommandAsync);
         }
 
-        private void OnActorStartedEvent(ActorStartedEvent actorStartedEvent)
+        private async Task OnActorStartedEventAsync(ActorStartedEvent actorStartedEvent)
         {
             if (!_actorNodes.ContainsKey(actorStartedEvent.Id))
             {
@@ -40,16 +44,11 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
                     _actorEdges.Add(actorStartedEvent.Id, new List<long>());
                 }
 
-                Context.System.EventStream.Publish(new ActorsUpdatedEvent
-                {
-                    Depth = actorStartedEvent.Depth,
-                    Added = actorStartedEvent.Id,
-                    Name = actorStartedEvent.Name
-                });
+                await NotifyClientsAsync(actorStartedEvent);
             }
         }
 
-        private void OnActorStoppedEvent(ActorStoppedEvent actorStoppedEvent)
+        private async Task OnActorStoppedEventAsync(ActorStoppedEvent actorStoppedEvent)
         {
             _actorNodes.Remove(actorStoppedEvent.Id);
             _actorEdges.Remove(actorStoppedEvent.Id);
@@ -58,13 +57,10 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
                 .Where(x => x.Contains(actorStoppedEvent.Id))
                 .ForEach(x => x.Remove(actorStoppedEvent.Id));
 
-            Context.System.EventStream.Publish(new ActorsUpdatedEvent
-            {
-                Removed = actorStoppedEvent.Id
-            });
+            await NotifyClientsAsync(actorStoppedEvent);
         }
 
-        private void OnActorReceivedMessageEvent(ActorReceivedMessageEvent actorReceivedMessageEvent)
+        private async Task OnActorReceivedMessageEventAsync(ActorReceivedMessageEvent actorReceivedMessageEvent)
         {
             if (!_actorEdges.TryGetValue(actorReceivedMessageEvent.Id, out var edges))
             {
@@ -77,25 +73,20 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
                 edges.Add(actorReceivedMessageEvent.SenderId);
             }
 
-            Context.System.EventStream.Publish(new EdgesUpdatedEvent
-            {
-                ReceiverId = actorReceivedMessageEvent.Id,
-                SenderId = actorReceivedMessageEvent.SenderId
-            });
+            await NotifyClientsAsync(actorReceivedMessageEvent);
         }
 
-        private void OnActorsRequestedCommand(ActorsRequestedCommand actorsRequestedCommand)
+        private async Task OnQueryActorsCommandAsync(QueryActorsCommand actorsRequestedCommand)
         {
-            Sender.Tell(new ActorsRequestedCommandResponse
+            await NotifyClientsAsync(new QueryActorsFinishedEvent
             {
-                Actors = _actorNodes.ToDictionary(x => x.Key, y => y.Value.Name)
+                Actors = _actorNodes
             });
         }
-    }
 
-    public class ActorNode
-    {
-        public int Depth { get; init; }
-        public string Name { get; init; }
+        private async Task NotifyClientsAsync<TMessage>(TMessage message)
+        {
+            await _hubContext.Clients.All.SendAsync($"On{typeof(TMessage).Name}", message);
+        }
     }
 }

@@ -7,6 +7,7 @@ using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Events;
 using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Models;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
 using DungeonOfTheWickedEventSourcing.Common.Configuration;
 using System.Text.Json;
@@ -16,7 +17,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
 {
     public class AkkaHost : AkkaHostServiceBase, IGraphDataProvider, ISignalRProcessor
     {
-        private IActorRef _signalRActor;
+        private IActorRef _actorDiagnosticsActor;
 
         public AkkaHost(IServiceProvider serviceProvider, ILogger<AkkaHost> logger) : base(serviceProvider, logger)
         { }
@@ -30,8 +31,7 @@ namespace DungeonOfTheWickedEventSourcing.Api
             var clientConnectionPort = configuration.GetValue(AkkaConfiguration.ClientConnectionPort, 0);
 
             CreateChildActor<ClientConnectionManagerActor>(name: ClientConnectionManagerActor.ActorName, clientConnectionPort);
-            CreateChildActor<ActorDiagnosticsActor>(name: ActorDiagnosticsActor.ActorName);
-            _signalRActor = CreateChildActor<SignalRActor>(name: SignalRActor.ActorName);
+            _actorDiagnosticsActor = CreateChildActor<ActorDiagnosticsActor>(name: ActorDiagnosticsActor.ActorName);            
         }
 
         public string GetGraphFields()
@@ -145,7 +145,15 @@ namespace DungeonOfTheWickedEventSourcing.Api
 
         public void Process(string message)
         {
-            _signalRActor.Tell(message);
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            if (string.Equals(message, typeof(QueryActorsCommand).Name, StringComparison.OrdinalIgnoreCase))
+            {
+                _actorDiagnosticsActor.Tell(new QueryActorsCommand());
+            }
         }
     }
 }

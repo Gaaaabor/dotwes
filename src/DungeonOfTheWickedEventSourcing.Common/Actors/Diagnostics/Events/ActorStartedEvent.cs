@@ -2,7 +2,7 @@
 {
     public class ActorStartedEvent : ActorDiagnosticEvent
     {
-        public int Depth { get; init; }
         public string Name { get; init; }
+        public int Depth { get; init; }
     }
 }
