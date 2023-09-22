@@ -1,6 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.DependencyInjection;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
 using DungeonOfTheWickedEventSourcing.Common.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,12 +46,19 @@ namespace DungeonOfTheWickedEventSourcing.Common
 
         protected override void PreStart()
         {
-            Context.System.EventStream.Publish(new ActorStartedEvent
+            Context.ActorSelection($"/user/{ActorDiagnosticsActor.ActorName}").Tell(new ActorStartedEvent
             {
                 Id = Self.Path.Uid,
                 Depth = Self.Path.Depth,
                 Name = Self.Path.Name
             });
+
+            //Context.System.EventStream.Publish(new ActorStartedEvent
+            //{
+            //    Id = Self.Path.Uid,
+            //    Depth = Self.Path.Depth,
+            //    Name = Self.Path.Name
+            //});
 
             Logger.LogInformation("{ActorName} started", Self.Path.Name);
         }
@@ -58,7 +66,8 @@ namespace DungeonOfTheWickedEventSourcing.Common
         protected override void PostStop()
         {
             Logger.LogInformation("{ActorName} stopped", Self.Path.Name);
-            Context.System.EventStream.Publish(new ActorStoppedEvent { Id = Self.Path.Uid });
+            Context.ActorSelection($"/user/{ActorDiagnosticsActor.ActorName}").Tell(new ActorStoppedEvent { Id = Self.Path.Uid });
+            //Context.System.EventStream.Publish(new ActorStoppedEvent { Id = Self.Path.Uid });
             _serviceScope?.Dispose();
         }
 

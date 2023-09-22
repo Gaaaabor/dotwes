@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Dispatch;
 using Akka.Dispatch.MessageQueues;
-using Akka.Event;
+using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
@@ -14,7 +14,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
         private readonly Stack<Envelope> _prependBuffer = new Stack<Envelope>();
         private readonly ConcurrentQueue<Envelope> _queue = new();
         private readonly IActorRef _owner;
-        private readonly EventStream _eventStream;
+        private readonly ActorSelection _actordiagnostics;
 
 
         /// <inheritdoc cref="IMessageQueue"/>
@@ -23,10 +23,10 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
         /// <inheritdoc cref="IMessageQueue"/>
         public int Count => _queue.Count + _prependBuffer.Count;
 
-        public TracedMessageQueue(IActorRef owner, EventStream eventStream)
+        public TracedMessageQueue(IActorRef owner, ActorSystem actorSystem)
         {
-            _owner = owner;
-            _eventStream = eventStream;
+            _owner = owner;            
+            _actordiagnostics = actorSystem.ActorSelection($"/user/{ActorDiagnosticsActor.ActorName}");
         }
 
         /// <inheritdoc cref="IMessageQueue"/>
@@ -46,7 +46,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
             var result = TryDequeueInternal(out envelope);
             if (result)
             {
-                _eventStream.Publish(new ActorReceivedMessageEvent
+                _actordiagnostics.Tell(new ActorReceivedMessageEvent
                 {
                     Id = _owner.Path.Uid,
                     SenderId = envelope.Sender.Path.Uid

@@ -1,7 +1,7 @@
 ﻿namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events
 {
-    public class ActorReceivedMessageEvent: ActorDiagnosticEvent
+    public class ActorReceivedMessageEvent : ActorDiagnosticEvent
     {
-        public long SenderId { get; init; } 
+        public long SenderId { get; init; }
     }
 }

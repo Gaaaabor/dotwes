@@ -1,5 +1,4 @@
-﻿using Akka.Event;
-using Akka.Util.Internal;
+﻿using Akka.Util.Internal;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
 using DungeonOfTheWickedEventSourcing.Common.Hubs;
@@ -18,9 +17,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
         public ActorDiagnosticsActor(IServiceProvider serviceProvider, IHubContext<MainHub> hubContext) : base(serviceProvider)
         {
             _hubContext = hubContext;
-
-            Context.System.EventStream.Subscribe<ActorDiagnosticEvent>(Self);
-            Context.System.EventStream.Subscribe<QueryActorsCommand>(Self);
 
             ReceiveAsync<ActorStartedEvent>(OnActorStartedEventAsync);
             ReceiveAsync<ActorStoppedEvent>(OnActorStoppedEventAsync);

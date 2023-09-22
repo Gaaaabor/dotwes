@@ -9,7 +9,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
     {
         public override IMessageQueue Create(IActorRef owner, ActorSystem system)
         {
-            return new TracedMessageQueue(owner, system.EventStream);
+            return new TracedMessageQueue(owner, system);
         }
 
         public TracedMailbox() : this(null, null)

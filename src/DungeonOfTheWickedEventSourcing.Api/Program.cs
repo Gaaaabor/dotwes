@@ -1,5 +1,4 @@
 using DungeonOfTheWickedEventSourcing.Api;
-using DungeonOfTheWickedEventSourcing.Api.Application;
 using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
 using DungeonOfTheWickedEventSourcing.Common.Configuration;
 using DungeonOfTheWickedEventSourcing.Common.Hubs;
@@ -17,7 +16,6 @@ public class Program
         builder.Services.AddSignalR();
         builder.Services.AddSingleton<AkkaHost>();
         builder.Services.AddSingleton<ISignalRProcessor>(x => x.GetRequiredService<AkkaHost>());
-        builder.Services.AddSingleton<IGraphDataProvider>(x => x.GetRequiredService<AkkaHost>());
         builder.Services.AddHostedService(x => x.GetRequiredService<AkkaHost>());
         builder.Services.AddResponseCompression(opts =>
         {
@@ -40,20 +38,6 @@ public class Program
         app.MapControllers();
         app.UseWebSockets();
         app.MapHub<MainHub>(MainHub.Path);
-
-        app.MapGet("/api/graph/fields", async x =>
-        {
-            var akkaHost = app.Services.GetRequiredService<IGraphDataProvider>();
-            var graphFields = akkaHost.GetGraphFields();
-            await x.Response.WriteAsync(graphFields);
-        });
-
-        app.MapGet("/api/graph/data", async x =>
-        {
-            var akkaHost = app.Services.GetRequiredService<IGraphDataProvider>();
-            var graphData = await akkaHost.GetGraphData();
-            await x.Response.WriteAsync(graphData);
-        });
 
         app.MapGet("/api/health", async x =>
         {

@@ -5,7 +5,10 @@
 @using System.Threading
 @using System.Text.Json;
 @using System.Drawing;
+@using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
 @using DungeonOfTheWickedEventSourcing.Web.Models.Dungeon;
+@using System.Text.Json.Serialization.Metadata;
+@using DungeonOfTheWickedEventSourcing.Web.Models;
 @implements IDisposable
 @inject IConfiguration _configuration
 
@@ -16,6 +19,10 @@
 {
     <button @onclick="@GenerateDungeonAsync">
         Generate new dungeon
+    </button>
+
+    <button @onclick="@SendMessageAsync">
+        Send message
     </button>
 
     <hr>
@@ -72,7 +79,8 @@
     private async Task SendMessageAsync()
     {
         _log += $"Sending: {_message}\n";
-        var message = new ArraySegment<byte>(Encoding.UTF8.GetBytes(_message));
+        var ser = JsonSerializer.Serialize<DiscoverHierarchyCommand>(new DiscoverHierarchyCommand());
+        var message = new ArraySegment<byte>(Encoding.UTF8.GetBytes(ser));
         await _clientWebSocket.SendAsync(message, WebSocketMessageType.Text, true, _cancellationTokenSource.Token);
     }
 
