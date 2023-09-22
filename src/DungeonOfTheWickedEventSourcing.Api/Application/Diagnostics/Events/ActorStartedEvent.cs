@@ -1,4 +1,4 @@
-﻿namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events
+﻿namespace DungeonOfTheWickedEventSourcing.Api.Application.Diagnostics.Events
 {
     public class ActorStartedEvent : ActorDiagnosticEvent
     {

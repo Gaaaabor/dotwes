@@ -1,7 +1,7 @@
-﻿using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
+﻿using DungeonOfTheWickedEventSourcing.Api.Application.SignalR;
 using Microsoft.AspNetCore.SignalR;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Hubs
+namespace DungeonOfTheWickedEventSourcing.Api.Akka.Hubs
 {
     public class MainHub : Hub
     {

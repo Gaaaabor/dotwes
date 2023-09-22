@@ -1,14 +1,13 @@
-﻿using Akka.Event;
+﻿using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
 using DungeonOfTheWickedEventSourcing.Api.Application.Loot.Commands;
-using DungeonOfTheWickedEventSourcing.Common;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Loot
 {
     public class LootActor : InjectionReceiveActorBase<LootActor>
     {
-        public LootActor(IServiceProvider serviceProvider) : base(serviceProvider)
+        public LootActor()
         {
-            Context.System.EventStream.Subscribe<ILootCommand>(Self);
+            Subscribe<ILootCommand>();
         }
     }
 }

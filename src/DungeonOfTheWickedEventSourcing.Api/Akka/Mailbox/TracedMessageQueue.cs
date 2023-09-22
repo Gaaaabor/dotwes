@@ -1,12 +1,10 @@
 ﻿using Akka.Actor;
 using Akka.Dispatch;
 using Akka.Dispatch.MessageQueues;
-using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics;
-using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
+namespace DungeonOfTheWickedEventSourcing.Api.Akka.Mailbox
 {
     public class TracedMessageQueue : IMessageQueue, IUnboundedMessageQueueSemantics, IUnboundedDequeBasedMessageQueueSemantics
     {
@@ -14,7 +12,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
         private readonly Stack<Envelope> _prependBuffer = new Stack<Envelope>();
         private readonly ConcurrentQueue<Envelope> _queue = new();
         private readonly IActorRef _owner;
-        private readonly ActorSelection _actordiagnostics;
 
 
         /// <inheritdoc cref="IMessageQueue"/>
@@ -25,18 +22,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
 
         public TracedMessageQueue(IActorRef owner, ActorSystem actorSystem)
         {
-            _owner = owner;            
-            _actordiagnostics = actorSystem.ActorSelection($"/user/{ActorDiagnosticsActor.ActorName}");
+            _owner = owner;
         }
 
         /// <inheritdoc cref="IMessageQueue"/>
         public void Enqueue(IActorRef receiver, Envelope envelope)
         {
-            if (envelope.Message is ActorReceivedMessageEvent actorReceivedMessageEvent && actorReceivedMessageEvent.SenderId == _owner.Path.Uid)
-            {
-                return;
-            }
-
             _queue.Enqueue(envelope);
         }
 
@@ -44,15 +35,6 @@ namespace DungeonOfTheWickedEventSourcing.Common.Mailbox
         public bool TryDequeue(out Envelope envelope)
         {
             var result = TryDequeueInternal(out envelope);
-            if (result)
-            {
-                _actordiagnostics.Tell(new ActorReceivedMessageEvent
-                {
-                    Id = _owner.Path.Uid,
-                    SenderId = envelope.Sender.Path.Uid
-                });
-            }
-
             return result;
         }
 

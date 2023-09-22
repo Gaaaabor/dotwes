@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.IO;
-using DungeonOfTheWickedEventSourcing.Common;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
 using System.Net;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
@@ -9,7 +9,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
     {
         public const string ActorName = "clientconnectionmanager";
 
-        public ClientConnectionManagerActor(IServiceProvider serviceProvider, int port) : base(serviceProvider)
+        public ClientConnectionManagerActor(int port)
         {
             Context.System
                 .Tcp()

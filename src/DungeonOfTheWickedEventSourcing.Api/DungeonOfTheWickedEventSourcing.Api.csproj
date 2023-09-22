@@ -10,10 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.IO.TcpTools" Version="0.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="Akka.Cluster.Hosting" Version="1.5.12.1" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.12.1" />
+    <PackageReference Include="Akka.IO.TcpTools" Version="0.0.3" />
+    <PackageReference Include="Akka.Management" Version="1.5.7" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.11" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>

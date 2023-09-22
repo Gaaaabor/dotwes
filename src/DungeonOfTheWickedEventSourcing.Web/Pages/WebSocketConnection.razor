@@ -5,7 +5,6 @@
 @using System.Threading
 @using System.Text.Json;
 @using System.Drawing;
-@using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
 @using DungeonOfTheWickedEventSourcing.Web.Models.Dungeon;
 @using System.Text.Json.Serialization.Metadata;
 @using DungeonOfTheWickedEventSourcing.Web.Models;
@@ -78,10 +77,7 @@
 
     private async Task SendMessageAsync()
     {
-        _log += $"Sending: {_message}\n";
-        var ser = JsonSerializer.Serialize<DiscoverHierarchyCommand>(new DiscoverHierarchyCommand());
-        var message = new ArraySegment<byte>(Encoding.UTF8.GetBytes(ser));
-        await _clientWebSocket.SendAsync(message, WebSocketMessageType.Text, true, _cancellationTokenSource.Token);
+        
     }
 
     private async Task ReceiveLoop()

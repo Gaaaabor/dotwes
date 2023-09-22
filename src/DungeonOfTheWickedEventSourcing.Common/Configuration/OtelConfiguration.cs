@@ -15,24 +15,25 @@ namespace DungeonOfTheWickedEventSourcing.Common.Configuration
 
         public static IServiceCollection ConfigureOpenTelemetryDiagnostics(this IServiceCollection services)
         {
-            services.AddOpenTelemetryTracing(configure => configure
-                .SetResourceBuilder(_resourceBuilder)
-                .AddAspNetCoreInstrumentation()
-                .AddSource(ApplicationName)
-                .AddConsoleExporter()
-                .AddOtlpExporter(options =>
-                {
-                    options.Endpoint = _otlpExporterEndpointUri;
-                }));
-
-            services.AddOpenTelemetryMetrics(configure => configure
-                .SetResourceBuilder(_resourceBuilder)
-                .AddMeter("Meter")
-                .AddConsoleExporter()
-                .AddOtlpExporter(options =>
-                {
-                    options.Endpoint = _otlpExporterEndpointUri;
-                }));
+            //services
+            //    .AddOpenTelemetry()
+            //    .WithTracing(configure => configure
+            //        .SetResourceBuilder(_resourceBuilder)
+            //        .AddAspNetCoreInstrumentation()
+            //        //.AddSource(ApplicationName)
+            //        .AddConsoleExporter()
+            //        .AddOtlpExporter(options =>
+            //        {
+            //            options.Endpoint = _otlpExporterEndpointUri;
+            //        }))
+            //    .WithMetrics(configure => configure
+            //        .SetResourceBuilder(_resourceBuilder)
+            //        //.AddMeter("Meter")
+            //        .AddConsoleExporter()
+            //        .AddOtlpExporter(options =>
+            //        {
+            //            options.Endpoint = _otlpExporterEndpointUri;
+            //        }));
 
             return services;
         }
@@ -41,11 +42,12 @@ namespace DungeonOfTheWickedEventSourcing.Common.Configuration
         {
             logging.AddOpenTelemetry(configure =>
             {
-                configure.SetResourceBuilder(_resourceBuilder);
                 configure.IncludeFormattedMessage = true;
                 configure.IncludeScopes = true;
                 configure.ParseStateValues = true;
+                configure.SetResourceBuilder(_resourceBuilder);                
                 configure.AddConsoleExporter();
+
                 configure.AddOtlpExporter(options =>
                 {
                     options.Endpoint = _otlpExporterEndpointUri;

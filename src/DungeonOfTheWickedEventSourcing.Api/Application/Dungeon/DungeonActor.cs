@@ -1,12 +1,12 @@
 ﻿using Akka.Actor;
 using Akka.Event;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon.Commands;
 using DungeonOfTheWickedEventSourcing.Api.Application.Dungeon.Events;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Events;
 using DungeonOfTheWickedEventSourcing.Api.Application.Enemy;
 using DungeonOfTheWickedEventSourcing.Api.Application.Loot;
-using DungeonOfTheWickedEventSourcing.Common;
 using System.Drawing;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
@@ -19,12 +19,12 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
         private readonly Guid _dungeonId;
         private Size _size;
 
-        public DungeonActor(Guid dungeonId, IServiceProvider serviceProvider) : base(serviceProvider)
+        public DungeonActor(Guid dungeonId)
         {
-            Context.System.EventStream.Subscribe<IDungeonCommand>(Self);
-
-            Receive<GenerateDungeonCommand>(OnGenerateCommand);
             _dungeonId = dungeonId;
+
+            Subscribe<IDungeonCommand>();
+            Receive<GenerateDungeonCommand>(OnGenerateCommand);
         }
 
         private void OnGenerateCommand(GenerateDungeonCommand generateCommand)
@@ -82,7 +82,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Dungeon
         private void Undiscovered()
         {
             Receive<DiscoverDungeonCommand>(x =>
-            {                
+            {
                 Become(Discovered);
                 Sender.Tell(new DungeonDiscoveredEvent());
             });

@@ -3,7 +3,6 @@ using Akka.IO;
 using Akka.IO.TcpTools;
 using Akka.IO.TcpTools.Actor;
 using DungeonOfTheWickedEventSourcing.Api.Application.DungeonGuardian.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Actors.ActorWalker.Commands;
 using DungeonOfTheWickedEventSourcing.Common.Events;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
@@ -39,12 +38,6 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.Connection
                 if (message.Contains(nameof(GenerateDungeonCommand)))
                 {
                     Context.System.EventStream.Publish(new GenerateDungeonCommand { ConnectionId = _connectionId });
-                    return;
-                }
-
-                if (message.Contains(nameof(DiscoverHierarchyCommand)))
-                {
-                    Context.System.EventStream.Publish(new DiscoverHierarchyCommand());
                     return;
                 }
             }

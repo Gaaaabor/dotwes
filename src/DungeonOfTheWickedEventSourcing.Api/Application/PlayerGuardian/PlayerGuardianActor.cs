@@ -1,4 +1,4 @@
-﻿using DungeonOfTheWickedEventSourcing.Common;
+﻿using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.PlayerGuardian
 {
@@ -6,7 +6,7 @@ namespace DungeonOfTheWickedEventSourcing.Api.Application.PlayerGuardian
     {
         public const string ActorName = "playerguardian";
 
-        public PlayerGuardianActor(IServiceProvider serviceProvider) : base(serviceProvider)
+        public PlayerGuardianActor()
         {
         }
     }

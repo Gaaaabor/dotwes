@@ -1,14 +1,13 @@
-﻿using Akka.Event;
+﻿using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
 using DungeonOfTheWickedEventSourcing.Api.Application.Enemy.Commands;
-using DungeonOfTheWickedEventSourcing.Common;
 
 namespace DungeonOfTheWickedEventSourcing.Api.Application.Enemy
 {
     public class EnemyActor : InjectionReceiveActorBase<EnemyActor>
     {
-        public EnemyActor(IServiceProvider serviceProvider) : base(serviceProvider)
+        public EnemyActor()
         {
-            Context.System.EventStream.Subscribe<IEnemyCommand>(Self);
+            Subscribe<IEnemyCommand>();
         }
     }
 }

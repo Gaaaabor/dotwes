@@ -1,10 +1,11 @@
 ﻿using Akka.Util.Internal;
-using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Commands;
-using DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics.Events;
-using DungeonOfTheWickedEventSourcing.Common.Hubs;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Base;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Hubs;
+using DungeonOfTheWickedEventSourcing.Api.Application.Diagnostics.Commands;
+using DungeonOfTheWickedEventSourcing.Api.Application.Diagnostics.Events;
 using Microsoft.AspNetCore.SignalR;
 
-namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
+namespace DungeonOfTheWickedEventSourcing.Api.Application.Diagnostics
 {
     public class ActorDiagnosticsActor : InjectionReceiveActorBase<ActorDiagnosticsActor>
     {
@@ -14,7 +15,7 @@ namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
         private readonly Dictionary<long, List<long>> _actorEdges = new();
         private readonly IHubContext<MainHub> _hubContext;
 
-        public ActorDiagnosticsActor(IServiceProvider serviceProvider, IHubContext<MainHub> hubContext) : base(serviceProvider)
+        public ActorDiagnosticsActor(IHubContext<MainHub> hubContext)
         {
             _hubContext = hubContext;
 

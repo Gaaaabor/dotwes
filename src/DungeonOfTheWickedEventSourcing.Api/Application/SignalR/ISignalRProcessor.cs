@@ -1,4 +1,4 @@
-﻿namespace DungeonOfTheWickedEventSourcing.Common.Actors.SignalR
+﻿namespace DungeonOfTheWickedEventSourcing.Api.Application.SignalR
 {
     public interface ISignalRProcessor
     {

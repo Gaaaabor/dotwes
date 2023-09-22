@@ -1,7 +1,7 @@
-using DungeonOfTheWickedEventSourcing.Api;
-using DungeonOfTheWickedEventSourcing.Common.Actors.SignalR;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Configuration;
+using DungeonOfTheWickedEventSourcing.Api.Akka.Hubs;
+using DungeonOfTheWickedEventSourcing.Api.Application.SignalR;
 using DungeonOfTheWickedEventSourcing.Common.Configuration;
-using DungeonOfTheWickedEventSourcing.Common.Hubs;
 using Microsoft.AspNetCore.ResponseCompression;
 
 public class Program
@@ -10,13 +10,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Services.ConfigureAkka(builder.Configuration);
+
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddSignalR();
-        builder.Services.AddSingleton<AkkaHost>();
-        builder.Services.AddSingleton<ISignalRProcessor>(x => x.GetRequiredService<AkkaHost>());
-        builder.Services.AddHostedService(x => x.GetRequiredService<AkkaHost>());
+        builder.Services.AddSingleton<ISignalRProcessor>(x => x.GetRequiredService<SignalRProcessor>());
         builder.Services.AddResponseCompression(opts =>
         {
             opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });

@@ -1,4 +1,4 @@
-﻿namespace DungeonOfTheWickedEventSourcing.Common.Actors.Diagnostics
+﻿namespace DungeonOfTheWickedEventSourcing.Api.Application.Diagnostics
 {
     public class ActorNode
     {
