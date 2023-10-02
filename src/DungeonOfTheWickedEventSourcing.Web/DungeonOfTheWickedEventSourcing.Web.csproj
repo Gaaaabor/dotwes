@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DungeonOfTheWickedEventSourcing.GameEngine\DungeonOfTheWickedEventSourcing.GameEngine.csproj" />
     <ProjectReference Include="..\DungeonOfTheWickedEventSourcing.Common\DungeonOfTheWickedEventSourcing.Common.csproj" />
   </ItemGroup>
 

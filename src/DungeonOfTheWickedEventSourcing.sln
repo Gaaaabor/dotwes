@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tempo", "tempo", "{2D48C5BD
 		config\tempo\tempo.yaml = config\tempo\tempo.yaml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DungeonOfTheWickedEventSourcing.GameEngine", "..\DungeonOfTheWickedEventSourcing.GameEngine\DungeonOfTheWickedEventSourcing.GameEngine.csproj", "{1DC5626D-90BA-4F90-A39B-A164D0CAFC1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E26D7C8-719E-4D3F-B71F-44659CF8238E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DC5626D-90BA-4F90-A39B-A164D0CAFC1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DC5626D-90BA-4F90-A39B-A164D0CAFC1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DC5626D-90BA-4F90-A39B-A164D0CAFC1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DC5626D-90BA-4F90-A39B-A164D0CAFC1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
